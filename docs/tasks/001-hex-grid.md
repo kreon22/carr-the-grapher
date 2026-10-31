@@ -1,6 +1,6 @@
 # 001 — Hex grid on screen
 
-Status: todo
+Status: done
 
 ## Goal
 A Godot 4 project that opens a window and draws a hex grid. This is the foundation everything else stands on.
