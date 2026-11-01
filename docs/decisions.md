@@ -3,6 +3,8 @@
 Short log of choices, so we don't re-argue them. Newest at the top.
 Format: **date — decision.** Why. (Who: design / code)
 
+**2026-11-01 — Fog is its own node (`scripts/fog.gd`) drawn between the grid and Carr; it owns the revealed set and only listens to `Carr.moved`.** One job per script; the grid stays a pure map, and later systems can ask `fog.is_revealed()`. Revealed hexes are permanent. `reveal_radius` is exported (default 0) so both feels can be tried in play. (code)
+
 **2026-11-01 — Movement keys: W/E (up-left/up-right), A/D (left/right), Z/X (down-left/down-right), bound by physical key position.** Around S these six keys already form a pointy-top hex on a QWERTY keyboard; physical keycodes keep the same shape on QWERTZ/AZERTY. Remappable in Project Settings > Input Map (`move_nw` … `move_se`). (code)
 
 **2026-11-01 — `Carr.moved(from, to)` fires on arrival, after the tween.** "Entered a hex" is the moment fog, ink and landmarks care about. Carr's `coords` already point at the target during the tween. (code)

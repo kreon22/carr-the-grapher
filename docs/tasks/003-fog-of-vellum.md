@@ -1,6 +1,6 @@
 # 003 — Fog of vellum
 
-Status: todo
+Status: done
 Depends on: 002
 
 ## Goal
