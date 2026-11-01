@@ -19,7 +19,7 @@ Solo-dev prototype. Godot 4.x, GDScript only.
 ## Running & checking
 - Run the game: `godot --path .` (main scene set in project settings).
 - Headless sanity check: `godot --headless --path . --quit-after 120` must finish with no script errors.
-- If tests exist in `tests/`, run them before committing. Each test is a `SceneTree` script: `godot --headless --path . -s tests/test_hex.gd` (exit code 1 on failure). On a fresh checkout run `godot --headless --path . --import` once first so `class_name`s resolve.
+- If tests exist in `tests/`, run them before committing. Each test is a `SceneTree` script: `godot --headless --path . -s tests/test_hex.gd` (exit code 1 on failure; run every `tests/test_*.gd`). On a fresh checkout run `godot --headless --path . --import` once first so `class_name`s resolve.
 
 ## Git
 - Small commits, message format: `task NNN: what changed`.

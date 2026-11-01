@@ -5,7 +5,11 @@ extends RefCounted
 
 const SQRT3: float = 1.7320508075688772
 
-## The six axial neighbor offsets, clockwise starting east (screen y points down).
+## Pointy-top directions, clockwise from east (screen y points down).
+## Values index into DIRECTIONS.
+enum Dir { E, SE, SW, W, NW, NE }
+
+## The six axial neighbor offsets, in Dir order.
 const DIRECTIONS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 1),
 	Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, -1),
@@ -40,6 +44,11 @@ static func cube_round(q: float, r: float) -> Vector2i:
 	elif dr > ds:
 		rr = -rq - rs
 	return Vector2i(int(rq), int(rr))
+
+
+## The hex one step from `q_r` in direction `dir` (a Dir value).
+static func neighbor(q_r: Vector2i, dir: Dir) -> Vector2i:
+	return q_r + DIRECTIONS[dir]
 
 
 static func neighbors(q_r: Vector2i) -> Array[Vector2i]:

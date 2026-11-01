@@ -1,6 +1,6 @@
 # 002 — Carr moves hex to hex
 
-Status: todo
+Status: done
 Depends on: 001
 
 ## Goal
