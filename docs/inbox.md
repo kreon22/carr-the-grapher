@@ -4,6 +4,7 @@ Raw ideas, narrated on the go. Newest at the top. Owned by the design side (chat
 When an idea is worked into `design.md` or a task, mark it `→ moved to …`.
 
 ## 2026-11-10
+- Factions: the king, the industry workers' guild coalition (farmers, woodcutters, quarry workers etc.), the common people's house of representatives, the druids; the same set for a neighboring kingdom far away. → design.md (Factions)
 - Wants a browser/artifact MVP like the Kármán game. → moved to decisions.md
 - Loop: out in the wild alone, wind in hair, nature sounds, landscape described or shown as an image → draw map *and* landscape → report to city council (scene music; while drawing only paper rustle and ink) → whose camp do you play into? → next mission to map the unmapped. → moved to design.md
 - Gig ideas: boat measuring lake depth; mapping a border for someone over a mountain, rough patches; rough gigs come with an entourage, but mostly alone, sketching. → design.md (commission types)

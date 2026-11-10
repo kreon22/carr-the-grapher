@@ -1,0 +1,1281 @@
+<title>Carr the Grapher</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Alegreya:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: a cartographer's desk at night. Dark oak surround, one vellum leaf as the stage for each scene. Single deliberate look. */
+:root{
+  --desk:#1b1510; --desk-2:#251c15; --desk-line:#3a2c20;
+  --vellum:#ecdfc2; --vellum-hi:#f4ead3; --vellum-lo:#dcc9a3;
+  --ink:#2a1c13; --ink-soft:#5b4635; --pencil:#857764;
+  --wash:#5f8396; --seal:#8a2a22; --gilt:#b58c48; --moss:#4f6b3e;
+  --on-desk:#e7d8b9; --on-desk-dim:#a8977a;
+  --f-display:"IM Fell English SC","IM Fell English",Georgia,"Times New Roman",serif;
+  --f-hand:"IM Fell English",Georgia,"Times New Roman",serif;
+  --f-body:"Alegreya",Georgia,"Times New Roman",serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{
+  margin:0;background:var(--desk);color:var(--on-desk);font-family:var(--f-body);font-size:17px;line-height:1.5;
+  background-image:repeating-linear-gradient(92deg,rgba(255,255,255,.012) 0 2px,transparent 2px 9px),radial-gradient(120% 80% at 50% 0%,var(--desk-2),var(--desk) 70%);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1180px;margin:0 auto;padding-block:14px 48px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:6px 14px;border-bottom:1px solid var(--desk-line);margin-bottom:18px}
+.mark{font-family:var(--f-display);font-size:22px;letter-spacing:.04em;color:var(--on-desk)}
+.mark i{font-family:var(--f-hand);color:var(--on-desk-dim);font-size:17px;margin-left:4px}
+.status{font-family:var(--f-hand);font-style:italic;color:var(--on-desk-dim);font-size:16px;flex:1;text-align:center;min-width:0}
+.status b{font-style:normal;color:var(--on-desk);font-weight:400}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--f-display);font-size:17px;letter-spacing:.05em;background:var(--ink);color:var(--vellum-hi);border:1px solid var(--ink);padding:9px 18px;border-radius:2px;transition:background .2s,transform .1s}
+.btn:hover{background:#3d2a1d}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:rgba(42,28,19,.08)}
+.btn.seal{background:var(--seal);border-color:var(--seal)}
+.btn.seal:hover{background:#a1352b}
+.deskbtn{font-family:var(--f-hand);font-style:italic;background:transparent;color:var(--on-desk-dim);border:1px solid var(--desk-line);padding:5px 12px;border-radius:2px}
+.deskbtn:hover{color:var(--on-desk)}
+:focus-visible{outline:2px solid var(--gilt);outline-offset:2px}
+
+.leaf{
+  color:var(--ink);border-radius:2px;padding:clamp(18px,3vw,34px);
+  background:radial-gradient(130% 100% at 25% 15%,var(--vellum-hi) 0%,var(--vellum) 45%,var(--vellum-lo) 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 18px 50px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
+  position:relative;min-width:0;
+}
+.leaf h1,.leaf h2,.leaf h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;color:var(--ink)}
+.leaf h1{font-size:clamp(40px,7vw,76px);line-height:1;letter-spacing:.01em}
+.leaf h2{font-size:clamp(26px,3.4vw,34px);line-height:1.1}
+.leaf h3{font-size:20px;letter-spacing:.03em}
+.leaf p{margin:0}
+.eyebrow{font-family:var(--f-hand);font-style:italic;color:var(--ink-soft);font-size:16px}
+.hand{font-family:var(--f-hand)}
+.muted{color:var(--ink-soft)}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.rule{height:1px;background:linear-gradient(90deg,transparent,rgba(42,28,19,.35),transparent);border:0;margin:6px 0}
+canvas{display:block;max-width:100%}
+
+/* title */
+.title-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(18px,4vw,48px);align-items:center}
+.title-grid canvas{width:100%;height:auto;border:1px solid rgba(42,28,19,.18)}
+.lede{font-size:19px;max-width:34em}
+.letter-wait{border-left:3px solid var(--seal);padding:6px 0 6px 14px;font-family:var(--f-hand);font-style:italic}
+
+/* brief */
+.brief-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+.letter{font-family:var(--f-hand);font-size:19px;line-height:1.55;padding:22px 24px;border:1px solid rgba(42,28,19,.25);background:rgba(255,250,235,.35);position:relative}
+.letter .sig{text-align:right;font-style:italic;margin-top:12px}
+.wax{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);font-size:24px;color:#f1d6c0;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.25),transparent 40%),var(--c,var(--seal));
+  box-shadow:inset 0 0 0 5px rgba(0,0,0,.12),inset 0 0 0 7px rgba(255,255,255,.08),0 3px 6px rgba(0,0,0,.35);flex:none}
+.letter .wax{position:absolute;right:-10px;bottom:-14px}
+.encounter{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(42,28,19,.18)}
+.encounter:first-child{border-top:0}
+.encounter .wax{width:44px;height:44px;font-size:18px}
+.encounter .who{font-family:var(--f-display);font-size:17px}
+.encounter q{font-family:var(--f-hand);font-style:italic;display:block;margin:4px 0 8px;quotes:"“" "”"}
+.choice{font-family:var(--f-hand);font-size:15px;border:1px solid rgba(42,28,19,.4);background:transparent;color:var(--ink);padding:5px 12px;border-radius:2px}
+.choice[aria-pressed="true"]{background:var(--ink);color:var(--vellum-hi)}
+
+/* expedition */
+.exp-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px;align-items:start}
+.chart-wrap{position:relative}
+#chart{width:100%;height:auto;cursor:crosshair;touch-action:manipulation;border:1px solid rgba(42,28,19,.2)}
+.place{font-family:var(--f-display);font-size:24px}
+.desc p{margin-bottom:10px;font-size:17.5px}
+.desc p.time{font-family:var(--f-hand);font-style:italic;color:var(--ink-soft)}
+.actions{display:flex;flex-direction:column;gap:8px}
+.actions .btn{text-align:left}
+.log{max-height:240px;overflow:auto;font-size:15.5px;border-top:1px solid rgba(42,28,19,.2);padding-top:8px}
+.log div{padding:5px 0;border-bottom:1px dotted rgba(42,28,19,.2)}
+.log .t{font-family:var(--f-hand);font-style:italic;color:var(--ink-soft);margin-right:6px}
+.hint{font-family:var(--f-hand);font-style:italic;color:var(--ink-soft);font-size:15px}
+.supplies{display:inline-flex;gap:4px;vertical-align:middle;margin-left:6px}
+.supplies span{width:10px;height:10px;border-radius:50%;border:1px solid var(--on-desk-dim)}
+.supplies span.full{background:var(--on-desk-dim)}
+
+/* drawing */
+.tabs{display:flex;gap:4px;margin-bottom:-1px;position:relative;z-index:1}
+.tab{font-family:var(--f-display);font-size:17px;background:var(--desk-2);color:var(--on-desk-dim);border:1px solid var(--desk-line);border-bottom:0;padding:8px 18px;border-radius:2px 2px 0 0}
+.tab[aria-selected="true"]{background:var(--vellum-hi);color:var(--ink);border-color:var(--vellum-hi)}
+.draw-grid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:18px;align-items:start}
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.tool{font-family:var(--f-hand);font-size:15px;background:transparent;border:1px solid rgba(42,28,19,.35);color:var(--ink);padding:5px 10px;border-radius:2px;display:inline-flex;align-items:center;gap:6px}
+.tool[aria-pressed="true"]{background:var(--ink);color:var(--vellum-hi);border-color:var(--ink)}
+.tool .sw{width:16px;height:4px;background:currentColor;border-radius:2px}
+.icons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.icon-btn{background:rgba(255,250,235,.3);border:1px solid rgba(42,28,19,.25);border-radius:2px;padding:3px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink);font-family:var(--f-hand);font-size:11.5px;line-height:1.1;min-width:0}
+.icon-btn canvas{width:36px;height:36px}
+.icon-btn[aria-pressed="true"]{background:var(--ink);color:var(--vellum-hi)}
+.icon-btn[aria-pressed="true"] canvas{filter:invert(.9) sepia(.3)}
+.canvas-wrap{position:relative;line-height:0}
+.canvas-wrap canvas{width:100%;height:auto;touch-action:none;cursor:crosshair;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.label-input{position:absolute;font-family:var(--f-hand);font-style:italic;font-size:16px;line-height:1.2;padding:2px 6px;border:1px solid var(--ink);background:var(--vellum-hi);color:var(--ink);min-width:140px;transform:translate(-4px,-50%)}
+.side h3{margin-bottom:6px}
+.known{list-style:none;padding:0;margin:0;font-size:15px}
+.known li{display:flex;gap:8px;align-items:baseline;padding:3px 0}
+.known li::before{content:"○";color:var(--ink-soft);flex:none}
+.known li.done::before{content:"●";color:var(--ink)}
+.deals{font-size:14.5px;font-family:var(--f-hand);font-style:italic}
+.check{display:flex;gap:8px;align-items:center;font-size:15px}
+.titlefield{font-family:var(--f-display);font-size:17px;padding:5px 8px;border:1px solid rgba(42,28,19,.35);background:rgba(255,250,235,.5);color:var(--ink);width:100%;border-radius:2px}
+.sketch-prompt{font-family:var(--f-hand);font-style:italic;font-size:17px;background:rgba(255,250,235,.4);padding:12px 14px;border-left:2px solid var(--pencil)}
+select{font:inherit;font-family:var(--f-hand);padding:4px 6px;background:rgba(255,250,235,.6);border:1px solid rgba(42,28,19,.35);color:var(--ink);border-radius:2px;max-width:100%}
+
+/* report */
+.city{font-size:18px;max-width:46em}
+.seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.seat{border:1px solid rgba(42,28,19,.25);padding:14px;display:flex;flex-direction:column;gap:8px;background:rgba(255,250,235,.25)}
+.seat .top{display:flex;gap:10px;align-items:center}
+.seat .wax{width:40px;height:40px;font-size:17px}
+.seat .nm{font-family:var(--f-display);font-size:17px;line-height:1.15}
+.seat .ag{font-size:14.5px;color:var(--ink-soft)}
+.seat.foreign{background:rgba(42,28,19,.07);border-style:dashed}
+.thumbs{display:flex;gap:12px;flex-wrap:wrap}
+.thumbs canvas{width:min(320px,100%);height:auto;border:1px solid rgba(42,28,19,.25)}
+textarea{font:inherit;font-family:var(--f-hand);font-style:italic;font-size:17px;width:100%;min-height:80px;padding:10px;border:1px solid rgba(42,28,19,.35);background:rgba(255,250,235,.5);color:var(--ink);border-radius:2px;resize:vertical;box-sizing:border-box}
+
+/* results */
+.verdicts{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.verdict{border:1px solid rgba(42,28,19,.25);padding:16px;min-height:150px;display:flex;flex-direction:column;gap:8px;background:rgba(255,250,235,.25);position:relative}
+.verdict .head{display:flex;gap:10px;align-items:center}
+.verdict .wax{width:46px;height:46px;font-size:19px;transition:transform .5s,opacity .5s}
+.verdict.waiting .wax{animation:rock 2.4s ease-in-out infinite}
+.verdict.waiting .body{opacity:.35}
+.verdict .body{display:flex;flex-direction:column;gap:6px;transition:opacity .6s}
+.verdict.sealed .body{visibility:hidden}
+.verdict .line{font-family:var(--f-display);font-size:19px;line-height:1.15}
+.verdict .voice{font-family:var(--f-hand);font-style:italic;font-size:17px}
+.verdict .what{font-size:15px}
+.verdict .what b{font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:13.5px;padding:2px 8px;border-radius:20px;border:1px solid rgba(42,28,19,.35);font-variant-numeric:tabular-nums}
+.chip.up{background:rgba(79,107,62,.18);border-color:var(--moss)}
+.chip.down{background:rgba(138,42,34,.14);border-color:var(--seal)}
+.chip.coin{border-color:var(--gilt);background:rgba(181,140,72,.18)}
+.cracked .wax{transform:rotate(-8deg) scale(.86);opacity:.7}
+.cracked .wax::after{content:"";position:absolute;width:58%;height:2px;background:rgba(0,0,0,.45);transform:rotate(38deg)}
+.wax{position:relative}
+@keyframes rock{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.deliberation{font-family:var(--f-hand);font-style:italic;font-size:18px;min-height:1.6em;color:var(--ink-soft)}
+.chronicle{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.chronicle li{font-family:var(--f-hand);font-size:17px;padding-left:18px;position:relative}
+.chronicle li::before{content:"❧";position:absolute;left:0;color:var(--seal);font-size:14px;top:2px}
+.next{border:1px solid rgba(42,28,19,.3);padding:16px;background:rgba(255,250,235,.35)}
+.source-note{font-size:14px;color:var(--ink-soft);font-style:italic}
+.fade-in{animation:fadein .8s ease both}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* atlas */
+.atlas-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:22px;align-items:start}
+.maps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.maps figure{margin:0;cursor:zoom-in}
+.maps img{width:100%;display:block;border:1px solid rgba(42,28,19,.25)}
+.maps figcaption{font-family:var(--f-hand);font-style:italic;font-size:14.5px;padding-top:4px}
+.stand{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:6px 10px;align-items:center;font-size:15px}
+.meter{height:8px;background:rgba(42,28,19,.12);position:relative;border-radius:4px}
+.meter i{position:absolute;top:0;bottom:0;border-radius:4px}
+.meter::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(42,28,19,.4)}
+.empty{font-family:var(--f-hand);font-style:italic;color:var(--ink-soft)}
+#lightbox{position:fixed;inset:0;background:rgba(10,8,6,.85);display:grid;place-items:center;z-index:50;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));cursor:zoom-out}
+#lightbox img{max-width:100%;max-height:90vh;box-shadow:0 10px 40px rgba(0,0,0,.6)}
+
+@media (max-width:860px){
+  .title-grid,.brief-grid,.exp-grid,.draw-grid,.atlas-grid{grid-template-columns:minmax(0,1fr)}
+  .icons{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .log{max-height:180px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="mark">Carr <i>the Grapher</i></div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <button class="deskbtn" id="mute" type="button">Sound on</button>
+  </header>
+
+  <!-- TITLE -->
+  <section id="s-title" class="screen">
+    <div class="leaf title-grid">
+      <div class="stack">
+        <p class="eyebrow">A cartographer's commissions</p>
+        <h1>Carr the Grapher</h1>
+        <p class="lede">Go out alone into country nobody has drawn. Listen, row, sound the depths, and come home with a map. Then hand it to the people who rule, and find out what they make of it.</p>
+        <div id="waiting-letter" class="letter-wait" hidden></div>
+        <div class="row">
+          <button class="btn" id="start" type="button">Take the commission</button>
+          <button class="btn ghost" id="open-atlas" type="button">Open the atlas</button>
+        </div>
+        <p class="hint">Best with sound. Your atlas and the world's memory of your maps are kept between visits.</p>
+      </div>
+      <canvas id="title-canvas" width="960" height="660" aria-label="An unsurveyed sheet of vellum with a compass rose"></canvas>
+    </div>
+  </section>
+
+  <!-- BRIEF -->
+  <section id="s-brief" class="screen" hidden>
+    <div class="leaf stack">
+      <p class="eyebrow">The Council House, Corvalle</p>
+      <h2>A commission from the Crown</h2>
+      <div class="brief-grid">
+        <div class="letter">
+          <p>By order of the Crown of Aster.</p>
+          <p style="margin-top:10px">To Carr, licensed grapher of Corvalle: you are commissioned to survey <b>Lake Kalvas</b> on the eastern frontier. Its shores, its depths, and where its waters go. Deliver a fair copy to the Council on your return. The fee will be paid according to the map's use.</p>
+          <p class="sig">Chancellor Ivo Brandt,<br>for His Majesty Aldren IV</p>
+          <div class="wax" style="--c:#8a2a22">A</div>
+        </div>
+        <div>
+          <p class="eyebrow" style="margin-bottom:6px">On the steps outside, people find you.</p>
+          <div id="encounters"></div>
+        </div>
+      </div>
+      <div class="row" style="justify-content:flex-end">
+        <span class="hint" id="brief-hint">Answer the Guild and the Circle before you go.</span>
+        <button class="btn" id="set-out" type="button" disabled>Set out for Lake Kalvas</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPEDITION -->
+  <section id="s-exp" class="screen" hidden>
+    <div class="exp-grid">
+      <div class="leaf chart-wrap">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px">
+          <h3>Field chart</h3>
+          <span class="hint">Tap a neighbouring stretch of water to row there. Arrow keys work too.</span>
+        </div>
+        <canvas id="chart" width="1440" height="990" aria-label="Your pencil field chart of Lake Kalvas"></canvas>
+      </div>
+      <div class="leaf stack">
+        <div>
+          <p class="eyebrow" id="exp-when"></p>
+          <div class="place" id="place"></div>
+        </div>
+        <div class="desc" id="desc"></div>
+        <div class="actions" id="actions"></div>
+        <div>
+          <h3 style="font-size:17px">Field notes</h3>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DRAWING -->
+  <section id="s-draw" class="screen" hidden>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-map" aria-selected="true" type="button">The map</button>
+      <button class="tab" role="tab" id="tab-sketch" aria-selected="false" type="button">Sketchbook</button>
+    </div>
+    <div class="leaf">
+      <p class="hand muted" id="draw-intro" style="margin-bottom:12px;font-style:italic"></p>
+      <!-- map page -->
+      <div id="page-map" class="draw-grid">
+        <div>
+          <div class="toolbar" id="map-tools"></div>
+          <div class="canvas-wrap" id="map-wrap">
+            <canvas id="mapc" width="1920" height="1320" aria-label="Your fair copy of the map"></canvas>
+          </div>
+        </div>
+        <div class="side stack">
+          <div>
+            <h3>Marks</h3>
+            <div class="icons" id="icons"></div>
+          </div>
+          <label class="check"><input type="checkbox" id="show-pencil" checked> Show my field notes</label>
+          <div>
+            <h3>Title</h3>
+            <input class="titlefield" id="map-title" maxlength="28" value="Lake Kalvas">
+          </div>
+          <div>
+            <h3>What you found</h3>
+            <ul class="known" id="known"></ul>
+          </div>
+          <div>
+            <h3>Promises</h3>
+            <div class="deals" id="deals"></div>
+          </div>
+        </div>
+      </div>
+      <!-- sketch page -->
+      <div id="page-sketch" class="draw-grid" hidden>
+        <div>
+          <div class="toolbar" id="sketch-tools"></div>
+          <div class="canvas-wrap">
+            <canvas id="sketchc" width="1920" height="1280" aria-label="Your landscape sketch"></canvas>
+          </div>
+        </div>
+        <div class="side stack">
+          <div>
+            <h3>Draw from memory</h3>
+            <select id="sketch-subject" aria-label="Place to sketch"></select>
+          </div>
+          <div class="sketch-prompt" id="sketch-prompt"></div>
+          <p class="hint">The sketch goes to the council with the map, and into your atlas.</p>
+        </div>
+      </div>
+      <hr class="rule" style="margin-top:18px">
+      <div class="row" style="justify-content:space-between">
+        <span class="hint">Ink is permanent. Undo takes back only your last mark.</span>
+        <button class="btn" id="to-city" type="button">Carry the maps to Corvalle</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORT -->
+  <section id="s-report" class="screen" hidden>
+    <div class="leaf stack">
+      <p class="eyebrow">Corvalle, the evening you return</p>
+      <h2>Who sees your map?</h2>
+      <p class="city">The city smells of wet slate and roasted chestnuts. In the Council House the candles are already lit. The Crown will have its fair copy; it paid for it. Anyone else gets a copy only if you make one.</p>
+      <div class="thumbs" id="thumbs"></div>
+      <div class="seats" id="seats"></div>
+      <div>
+        <h3 style="margin-bottom:6px">Your cover note</h3>
+        <textarea id="note" maxlength="600" placeholder="What you say as you hand it over. Optional."></textarea>
+        <div class="row" style="margin-top:6px"><button class="choice" id="mic" type="button" hidden>Dictate</button></div>
+      </div>
+      <div class="row" style="justify-content:flex-end">
+        <button class="btn seal" id="deliver" type="button">Seal and deliver</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="s-results" class="screen" hidden>
+    <div class="leaf stack">
+      <p class="eyebrow">The council reads your map</p>
+      <h2 id="res-title">The seals are broken one by one</h2>
+      <div class="deliberation" id="deliberation" aria-live="polite"></div>
+      <div class="verdicts" id="verdicts"></div>
+      <div id="aftermath" class="stack" hidden>
+        <hr class="rule">
+        <h3>What came of it</h3>
+        <ul class="chronicle" id="events"></ul>
+        <p class="hand" id="rumor" style="font-style:italic"></p>
+        <div class="next" id="next"></div>
+        <p class="source-note" id="source-note"></p>
+        <div class="row" style="justify-content:flex-end">
+          <button class="btn ghost" id="again" type="button">Survey Lake Kalvas again</button>
+          <button class="btn" id="to-atlas" type="button">Open the atlas</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ATLAS -->
+  <section id="s-atlas" class="screen" hidden>
+    <div class="leaf stack">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <p class="eyebrow">Everything you have drawn, and what the world made of it</p>
+          <h2>Carr's Atlas</h2>
+        </div>
+        <button class="btn ghost" id="atlas-back" type="button">Back to the desk</button>
+      </div>
+      <div class="atlas-grid">
+        <div class="stack">
+          <h3>Maps and sketches</h3>
+          <div class="maps" id="maps"></div>
+        </div>
+        <div class="stack">
+          <h3>Standing</h3>
+          <div class="stand" id="standing"></div>
+          <p class="hand" id="purse"></p>
+          <h3>Chronicle</h3>
+          <ul class="chronicle" id="chron"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="lightbox" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+function h(tag, attrs, ...kids){
+  const e=document.createElement(tag);
+  if(attrs) for(const [k,v] of Object.entries(attrs)){
+    if(k==='class') e.className=v; else if(k==='text') e.textContent=v;
+    else if(k.startsWith('on')) e.addEventListener(k.slice(2),v);
+    else if(v!==false && v!=null) e.setAttribute(k,v===true?'':v);
+  }
+  for(const k of kids.flat()) if(k!=null) e.append(k.nodeType?k:document.createTextNode(String(k)));
+  return e;
+}
+
+/* ================= WORLD ================= */
+const W=16,H=11,CS=60,MW=W*CS,MH=H*CS;
+const LAKE=[
+'................',
+'...~~~~~~~~.....',
+'..~~~~~~~~~~~...',
+'.~~~~~..~~~~~~..',
+'.~~~~~..~~~~~~~~',
+'.~~~~~~~~~~~~~..',
+'..~~~~~~~~~~~...',
+'..~~~~~~~~~~....',
+'...~~~~~~~~~....',
+'.....~~~~~......',
+'................'];
+const inB=(c,r)=>c>=0&&r>=0&&c<W&&r<H;
+const isW=(c,r)=>inB(c,r)&&LAKE[r][c]==='~';
+const key=(c,r)=>c+','+r;
+const unkey=k=>k.split(',').map(Number);
+const cx=c=>c*CS+CS/2, cy=r=>r*CS+CS/2;
+const cheb=(a,b,c,d)=>Math.max(Math.abs(a-c),Math.abs(b-d));
+function hash(a,b,s=0){let x=(Math.imul(a+101,374761393)+Math.imul(b+37,668265263)+Math.imul(s+7,2246822519))|0;x=Math.imul(x^(x>>>13),1274126177);return ((x^(x>>>16))>>>0)/4294967296;}
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const range=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+
+const FEATURES=[
+ {id:'rautsalo',name:'Rautsalo',kind:'village',land:true,cells:[[0,5]],note:'village',
+  glance:'On the west shore, a huddle of tarred roofs and drying racks: Rautsalo, the fishing village you set out from.',
+  detail:'Rautsalo is forty souls, twelve boats and one opinion about everything. The headman says the Crown\'s tax-men came by boat last spring and counted the nets. Children follow you to the water\'s edge to watch the strange man draw.',
+  truth:'Rautsalo: fishing village of about forty people on the west shore. Lives off lake fishing; wary of tax-men.'},
+ {id:'reeds',name:'the reed bed',kind:'marsh',land:false,cells:[[2,6],[3,6],[2,7],[3,7]],note:'reeds',
+  glance:'A reed bed runs out from the south-west shore, loud with warblers.',
+  detail:'The oars catch in reeds taller than you. Stakes with notched heads mark out whose patch is whose: Rautsalo cuts its thatch here.',
+  truth:'Reed marsh in the south-west: shallow, cut by Rautsalo for thatch, a nesting ground for birds.'},
+ {id:'ford',name:'Wolf Ford',kind:'ford',land:true,cells:[[1,2]],note:'ford?',
+  glance:'In the north-west a stream comes down to the lake over a gravel bar. Deer tracks, and older tracks: hooves, shod.',
+  detail:'Wolf Ford. The stream runs knee-deep over hard gravel, wide enough for a cart, or a column of horse. Someone has cut a fresh blaze on an alder. A track runs north from it, toward nothing on any map you own.',
+  truth:'Wolf Ford: a hard gravel crossing at the north-west inflow, passable for carts and cavalry. An unrecorded track runs north from it.'},
+ {id:'northwood',name:'the North Wood',kind:'wood',land:true,cells:range(3,10).map(c=>[c,0]),note:'old wood',
+  glance:'Along the north shore the North Wood stands down to the water\'s edge, dark and very old.',
+  detail:'You step under the trees and the wind stops. Spruce three arm-spans round. Old cuts, mossed over, where someone took a few trunks long ago and stopped. Among the roots lies a ring of white stones that no woodcutter put there.',
+  truth:'The North Wood: old-growth spruce and pine, prime timber, with a druid stone ring hidden inside.'},
+ {id:'hallow',name:'Hallow Isle',kind:'sacred',land:true,cells:[[6,3],[7,3],[6,4],[7,4]],note:'island. stones!',
+  glance:'Mid-lake, an island crowned with standing stones. The gulls go around it.',
+  detail:'Hallow Isle. Seven stones taller than a man, leaning inward as if listening. Fresh rowan sprigs lie at the foot of each. The grass inside the ring has been cut by hand. Whoever tends this came recently, and left no boat.',
+  truth:'Hallow Isle: a druid sacred site, seven standing stones, actively tended.'},
+ {id:'shoals',name:'the Teeth',kind:'peril',land:false,cells:[[10,2],[11,2]],note:'rocks! careful',
+  glance:'To the north-east the water breaks white over something just under the surface.',
+  detail:'The hull grinds over rock. You fend off with an oar and lose the better part of two hours working free. The locals must have a name for this place. You call it the Teeth.',
+  truth:'The Teeth: rock shoals barely a fathom deep in the north-east, dangerous to any laden boat.'},
+ {id:'channel',name:'the deep channel',kind:'deep',land:false,cells:[].concat(...range(9,13).map(c=>[[c,4],[c,5]])),note:'deep',
+  glance:'East of the island the water turns a darker green. Deep.',
+  detail:'The water is cold even in the sun here, and the whole surface leans eastward. A plumb line would need to be long.',
+  truth:'A deep channel, 9 to 14 fathoms, running east from the island. Navigable by large boats.'},
+ {id:'run',name:'Kalvas Run',kind:'river',land:false,cells:[[14,4],[15,4]],note:'outflow, east',
+  glance:'At the eastern end the lake narrows and pours away between two low hills.',
+  detail:'Kalvas Run. The current takes the boat and you pull hard to hold your place. The river runs east, deep enough for barges. Three days downstream, the merchants say, is the Ostmarch border.',
+  truth:'Kalvas Run: the deep outflow river, navigable by barges east toward the Ostmarch frontier. Whoever holds it holds a route between the two kingdoms.'},
+ {id:'quarry',name:'the grey cliffs',kind:'stone',land:true,cells:[[12,7],[12,8]],note:'granite',
+  glance:'In the south-east, grey cliffs drop sheer into the water. The stone is pale and clean.',
+  detail:'Granite, fine-grained, the colour of old bread. Someone has tried it already: drill holes, a wedge rusted in place, and a mark scratched into the face, a hammer under a crown. Then they left.',
+  truth:'The grey cliffs: high-quality granite in the south-east; an abandoned trial quarry marked with an old Crown sign.'},
+ {id:'spire',name:'the drowned spire',kind:'ruin',land:false,cells:[[5,8]],note:'spire under water',
+  glance:'In the south bay something sticks up out of the water: a stone point, like a finger.',
+  detail:'A church spire, its tip just above the water. Below, through the brown water, roofs, a well-head, the lines of field walls. This was old Kalvas village, drowned when a lord\'s dam raised the lake three generations ago.',
+  truth:'The drowned spire of old Kalvas village, flooded about seventy years ago when a lord\'s dam raised the lake. The Commons still remember it as a wrong.'},
+];
+const FEAT=Object.fromEntries(FEATURES.map(f=>[f.id,f]));
+const CELLFEAT={}; FEATURES.forEach(f=>f.cells.forEach(([c,r])=>CELLFEAT[key(c,r)]=f));
+
+const DEPTH={};
+(function(){
+  for(let r=0;r<H;r++)for(let c=0;c<W;c++){
+    if(!isW(c,r))continue;
+    let d=9;
+    for(let rr=0;rr<H+2;rr++)for(let cc=-1;cc<=W;cc++){const rrr=rr-1; if(!isW(cc,rrr)) d=Math.min(d,cheb(c,r,cc,rrr));}
+    let v=[0,1,3,4,6,7,7][Math.min(d,6)]+Math.round(hash(c,r,3)*2);
+    const f=CELLFEAT[key(c,r)];
+    if(f){ if(f.id==='channel')v=9+Math.round(hash(c,r,5)*5); if(f.id==='run')v=8+Math.round(hash(c,r,6)*3); if(f.id==='shoals')v=1; if(f.id==='reeds')v=1; if(f.id==='spire')v=2; }
+    DEPTH[key(c,r)]=v;
+  }
+})();
+
+function regionOf(c,r){ if(c>=12&&r<=5)return'east'; if(r<=2)return'north'; if(c<=3)return'west'; if(r>=7)return'south'; return'center'; }
+const REGION_NAME={east:'The eastern narrows',north:'Under the north shore',west:'The west shallows',south:'The south bay',center:'Open water'};
+const REGION_TEXT={
+ west:['Reed-tops hiss along the west shore. Smoke from Rautsalo hangs low over the water and smells of tar and smoked bream.','The water here is shallow enough to see the bottom: sand ribbed by small waves, a snail drawing its slow line.','A heron stands in the shallows and does not move for you. Further off, someone in Rautsalo is hammering a boat.'],
+ north:['The North Wood comes right down to the water here: spruce and old pine, roots gripping the bank like knuckles. Somewhere inside, an axe, then nothing.','Cold air slides off the forest onto the lake. It smells of resin and old snow.','A stream mutters somewhere in the trees. The light under the branches is green and gone.'],
+ center:['Open water. The shores fall back on every side and the lake becomes sky. Only the oars and your own breath.','Out here the wind has the whole lake to run across. Small waves knock at the hull like someone asking to come in.','A loon calls once and dives. When it comes up it is somewhere else entirely.'],
+ east:['The water darkens and begins, almost too gently to notice, to pull. The lake is leaving through here, eastward, toward country you have only seen on other men\'s maps.','Two low hills stand either side of the narrows like gateposts. Between them the current braids and smooths.','Driftwood has piled against the eastern shore, grey and polished, all of it pointing the same way.'],
+ south:['The south bay is shallow and warm. Through the brown water you can see pale lines of old field walls.','Lilies, and the slow clockwork of dragonflies. The bottom is mud that remembers being land.','The cliffs to the east hold the afternoon heat. The water near them is glass.'],
+};
+const WEATHER={1:'A light westerly at your back. Wind in your hair.',2:'Fog lies on the lake until mid-morning. Sound carries strangely; you hear oars that are not yours.',3:'Clouds are building in the east and the wind has turned against you. This is your last day of bread.'};
+const NIGHT={1:'Night falls. You camp on a spit of sand and listen to the lake breathe. A fox barks twice.',2:'Second night. Rain ticks on the oilcloth. You copy your notes by a stub of candle so the wet will not take them.'};
+function timePhrase(hr){ if(hr<8)return'Dawn. Mist lifts off the water in slow sheets.'; if(hr<11)return'Morning. The light is clean and long.'; if(hr<14)return'Midday. The sun stands straight over the boat and the shadows hide underneath it.'; if(hr<17)return'Afternoon. The wind is warm and steady.'; return'Evening. The light goes copper, and the far shore flattens into a single dark line.'; }
+function ord(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
+
+const FACTIONS={
+ crown:{name:'The Crown',who:'King Aldren IV, through Chancellor Ivo Brandt',glyph:'A',color:'#8a2a22',
+  agenda:'Defensible borders and military intelligence. Wants to know where troops can cross, where boats can carry soldiers, and whether Lake Kalvas helps or threatens the realm against Ostmarch. Values precision and soundings. Suspicious of blank spaces. Commissioned the survey and pays the fee.'},
+ guild:{name:'The Guild Coalition',who:'Speaker Marta Hollin, for the farmers, woodcutters and quarry workers',glyph:'G',color:'#6b5222',
+  agenda:'Resources, land charters and transport routes: timber, stone, farmland, ways to move goods. Wants the North Wood and the granite cliffs opened to Guild crews. Pragmatic and mercantile, quick to claim any land a map seems to give them.'},
+ commons:{name:'The Commons\' House',who:'Speaker Ilse Varro, of the common people\'s house of representatives',glyph:'C',color:'#3f5c38',
+  agenda:'The safety and livelihoods of ordinary people: villages, fishing and reed rights, dangers to boats, and the memory of old wrongs, above all the drowned village of old Kalvas. Fears that maps bring tax-men, soldiers and enclosure. Warm, but easily alarmed.'},
+ druids:{name:'The Circle of the Grove',who:'Elder Oskari, of the druids',glyph:'O',color:'#2f4a4a',
+  agenda:'Keep sacred and wild places unmapped and untouched: Hallow Isle and the stone ring in the North Wood above all. Reads a map for what it reveals and what it spares. Patient, cryptic, with a long memory. Can bless or curse a grapher\'s name.'},
+ ostmarch:{name:'Ostmarch',who:'Lord-Envoy Veyl, of the far kingdom of Ostmarch',glyph:'V',color:'#3a3350',
+  agenda:'The neighbouring kingdom far to the east, with its own king, guilds, commons and druids. Wants intelligence on the frontier, especially rivers and routes leading east. Pays in secret. If they get a copy they act on it; if not, they may still hear rumours.'},
+};
+const FORDER=['crown','guild','commons','druids','ostmarch'];
+
+/* ================= STATE ================= */
+const freshRun=()=>({screen:'title',deals:{bribe:null,promise:null,commons:false,envoy:false},day:1,hour:6,boat:[1,5],revealed:{},path:[[1,5]],
+  soundings:{},found:{},ashore:{},entered:{},log:[],ended:false,endText:'',
+  map:{marks:[],title:'Lake Kalvas'},sketch:{marks:[],subject:''},copies:{crown:true,guild:false,commons:false,druids:false,ostmarch:false},note:'',delivered:false});
+let S=freshRun();
+let WORLD={standing:{crown:0,guild:0,commons:0,druids:0,ostmarch:0},coin:0,chronicle:[],surveys:0,next:null};
+let lastResult=null;
+
+/* ================= STORAGE (db per player, local fallback) ================= */
+const Store={col:null,ready:null,
+  init(){ this.ready=(async()=>{
+    try{ if(!window.claude?.use) return;
+      const [db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+      if(!db||!user) return; const id=await user.id(); if(!id) return;
+      this.col=db.collection('data/users/'+id);
+    }catch(e){ this.col=null; }
+  })(); return this.ready; },
+  lsGet(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch{return null}},
+  lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}},
+  async loadWorld(){ await this.ready;
+    if(this.col){ try{ const s=await this.col.doc('world').get(); if(s.exists) return s.data(); }catch{} }
+    return this.lsGet('carr-world'); },
+  async saveWorld(w){ await this.ready; const body=JSON.parse(JSON.stringify(w));
+    if(this.col){ try{ await this.col.doc('world').set(body); }catch{} }
+    this.lsSet('carr-world',body); },
+  async addPage(entry){ await this.ready; const id='page-'+entry.created;
+    if(this.col){ try{ await this.col.doc(id).set(entry); return; }catch{} }
+    const list=this.lsGet('carr-pages')||[]; list.push(entry); while(!this.lsSet('carr-pages',list)&&list.length>1) list.shift(); },
+  async listPages(){ await this.ready;
+    if(this.col){ try{ const snap=await this.col.get(); return snap.docs.filter(d=>d.id.startsWith('page-')).map(d=>d.data()).sort((a,b)=>b.created-a.created); }catch{} }
+    return (this.lsGet('carr-pages')||[]).sort((a,b)=>b.created-a.created); },
+};
+
+/* ================= SOUND ================= */
+const Sound=(()=>{
+  let ctx=null,master=null,white=null,brown=null,on=true,scene=null,token=0,layers=[],scratchG=null,night=false;
+  try{on=localStorage.getItem('carr-sound')!=='off'}catch{}
+  function ensure(){
+    if(ctx){ if(ctx.state==='suspended') ctx.resume().catch(()=>{}); return true; }
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return false;
+    try{ ctx=new AC(); }catch{ return false; }
+    master=ctx.createGain(); master.gain.value=on?0.9:0; master.connect(ctx.destination);
+    const len=ctx.sampleRate*3; white=ctx.createBuffer(1,len,ctx.sampleRate); brown=ctx.createBuffer(1,len,ctx.sampleRate);
+    const w=white.getChannelData(0),b=brown.getChannelData(0); let last=0,peak=0;
+    for(let i=0;i<len;i++){const x=Math.random()*2-1;w[i]=x;last=(last+0.02*x)/1.02;b[i]=last;peak=Math.max(peak,Math.abs(last));}
+    for(let i=0;i<len;i++)b[i]/=peak;
+    return true;
+  }
+  const t0=()=>ctx.currentTime;
+  function loopSrc(buf){const s=ctx.createBufferSource();s.buffer=buf;s.loop=true;s.start(t0(),Math.random()*2);return s;}
+  function bus(v){const g=ctx.createGain();g.gain.value=0;g.gain.setTargetAtTime(v,t0(),0.9);g.connect(master);return g;}
+  function filt(type,f,q=0.7){const x=ctx.createBiquadFilter();x.type=type;x.frequency.value=f;x.Q.value=q;return x;}
+  function burst(buf,{type='bandpass',f=1000,q=0.8,a=0.01,d=0.3,v=0.2,out=master,at=0}={}){
+    if(!ctx)return; const t=t0()+at; const s=ctx.createBufferSource();s.buffer=buf;const fl=filt(type,f,q);const g=ctx.createGain();
+    g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+d);
+    s.connect(fl).connect(g).connect(out);s.start(t,Math.random()*2);s.stop(t+a+d+0.05);
+  }
+  function tone(freq,{type='sine',to=null,a=0.005,d=0.3,v=0.2,out=master,at=0}={}){
+    if(!ctx)return; const t=t0()+at; const o=ctx.createOscillator();o.type=type;o.frequency.setValueAtTime(freq,t);
+    if(to)o.frequency.exponentialRampToValueAtTime(to,t+a+d);
+    const g=ctx.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+d);
+    o.connect(g).connect(out);o.start(t);o.stop(t+a+d+0.05);
+  }
+  function stopAll(){
+    token++; for(const l of layers){ try{l.g.gain.setTargetAtTime(0,t0(),0.4);}catch{} const nodes=l.nodes; setTimeout(()=>nodes.forEach(n=>{try{n.stop()}catch{}try{n.disconnect()}catch{}}),2600);} layers=[]; scratchG=null;
+  }
+  function every(fn,minMs,maxMs){const my=token;const step=()=>{if(my!==token)return;fn();setTimeout(step,minMs+Math.random()*(maxMs-minMs));};setTimeout(step,300+Math.random()*minMs);}
+  function wind(level){
+    const g=bus(level);const s=loopSrc(brown);const f=filt('bandpass',520,0.6);
+    const l1=ctx.createOscillator();l1.frequency.value=0.05;const l1g=ctx.createGain();l1g.gain.value=320;l1.connect(l1g).connect(f.frequency);l1.start();
+    const amp=ctx.createGain();amp.gain.value=0.6;const l2=ctx.createOscillator();l2.frequency.value=0.083;const l2g=ctx.createGain();l2g.gain.value=0.35;l2.connect(l2g).connect(amp.gain);l2.start();
+    s.connect(f).connect(amp).connect(g);layers.push({g,nodes:[s,l1,l2]});
+  }
+  function water(level){const g=bus(level);layers.push({g,nodes:[]});every(()=>burst(brown,{type:'lowpass',f:500+Math.random()*400,a:0.3+Math.random()*0.2,d:1.1,v:0.5,out:g}),900,2600);}
+  function birds(){const g=bus(1);layers.push({g,nodes:[]});
+    every(()=>{ if(night)return; const n=2+Math.floor(Math.random()*4),f=2300+Math.random()*1900,gap=0.1+Math.random()*0.07;
+      for(let i=0;i<n;i++) tone(f*(1+Math.random()*0.08),{to:f*1.35,a:0.01,d:0.07,v:0.035,out:g,at:i*gap}); },2600,8000);
+    every(()=>{ if(!night)return; for(let k=0;k<3;k++) for(let i=0;i<4;i++) tone(4300,{a:0.004,d:0.025,v:0.012,out:g,at:k*0.32+i*0.055}); },700,1300);
+  }
+  function music(){
+    const g=bus(0.8); const nodes=[];
+    const drone=[38,45].map((m,i)=>{const o=ctx.createOscillator();o.type='triangle';o.frequency.value=440*Math.pow(2,(m-69)/12);const lp=filt('lowpass',420);const dg=ctx.createGain();dg.gain.value=i?0.035:0.05;o.connect(lp).connect(dg).connect(g);o.start();nodes.push(o);return o;});
+    const mur=loopSrc(brown);const mf=filt('bandpass',380,0.5);const mg=ctx.createGain();mg.gain.value=0.07;mur.connect(mf).connect(mg).connect(g);nodes.push(mur);
+    layers.push({g,nodes});
+    const scale=[50,52,53,55,57,59,60,62,64,65,67,69,71,72];let idx=7,beat=0;const my=token,bt=0.56;
+    const pluck=(m,at,v=0.12)=>{const f=440*Math.pow(2,(m-69)/12);tone(f,{type:'triangle',a:0.004,d:1.3,v,out:g,at});tone(f*2,{a:0.004,d:0.6,v:v*0.3,out:g,at});};
+    const step=()=>{ if(my!==token)return;
+      if(beat%8===0||beat%8===5){tone(95,{to:48,a:0.003,d:0.28,v:0.25,out:g});burst(white,{type:'highpass',f:3000,a:0.002,d:0.04,v:0.03,out:g});}
+      if(Math.random()>0.28){ idx=Math.max(3,Math.min(scale.length-1,idx+[-2,-1,-1,1,1,2,0][Math.floor(Math.random()*7)])); pluck(scale[idx],0,beat%4===0?0.14:0.09); if(beat%8===0)pluck(scale[Math.max(0,idx-4)],0.02,0.06); }
+      beat++; setTimeout(step,bt*1000*(beat%8===7?1.5:1)); };
+    setTimeout(step,600);
+  }
+  function setScene(name){
+    if(!ensure()||scene===name)return; stopAll(); scene=name;
+    if(name==='wild'){wind(0.32);water(0.55);birds();}
+    else if(name==='title'){wind(0.18);}
+    else if(name==='draw'){ const g=bus(1);const s=loopSrc(white);const hp=filt('highpass',1800);const bp=filt('bandpass',3600,0.9);scratchG=ctx.createGain();scratchG.gain.value=0;s.connect(hp).connect(bp).connect(scratchG).connect(g);
+      const room=loopSrc(brown);const rf=filt('lowpass',200);const rg=ctx.createGain();rg.gain.value=0.05;room.connect(rf).connect(rg).connect(g);layers.push({g,nodes:[s,room]}); }
+    else if(name==='city'){music();}
+  }
+  return{
+    ensure,setScene,
+    get on(){return on},
+    toggle(){on=!on;try{localStorage.setItem('carr-sound',on?'on':'off')}catch{} if(ctx&&master)master.gain.setTargetAtTime(on?0.9:0,t0(),0.1);return on;},
+    setNight(v){night=v;},
+    scratch(speed){ if(!scratchG)return; scratchG.gain.setTargetAtTime(Math.min(0.16,speed*0.012),t0(),0.03); },
+    rustle(){ if(!ctx)return; burst(white,{type:'bandpass',f:1300,q:0.6,a:0.02,d:0.22,v:0.12}); },
+    stamp(){ if(!ctx)return; tone(150,{to:55,a:0.002,d:0.14,v:0.3}); burst(white,{type:'bandpass',f:2400,a:0.002,d:0.05,v:0.08}); },
+    oar(){ if(!ctx)return; burst(brown,{type:'bandpass',f:700,q:0.7,a:0.25,d:0.6,v:0.5}); burst(white,{type:'bandpass',f:1600,q:1.2,a:0.05,d:0.35,v:0.06,at:0.5}); },
+    plop(){ if(!ctx)return; tone(420,{to:85,a:0.004,d:0.2,v:0.35}); tone(900,{to:1500,a:0.004,d:0.08,v:0.06,at:0.12}); },
+    scrape(){ if(!ctx)return; burst(brown,{type:'lowpass',f:260,a:0.05,d:0.9,v:0.8}); tone(58,{type:'sawtooth',a:0.05,d:0.7,v:0.06}); },
+    crack(){ if(!ctx)return; for(let i=0;i<6;i++) burst(white,{type:'highpass',f:2200+Math.random()*2000,a:0.001,d:0.03,v:0.25,at:Math.random()*0.12}); tone(220,{to:120,a:0.002,d:0.1,v:0.12}); },
+  };
+})();
+
+/* ================= SCREENS ================= */
+const SCREENS=['title','brief','exp','draw','report','results','atlas'];
+function show(name){
+  SCREENS.forEach(s=>{$('#s-'+s).hidden=(s!==name);});
+  S.screen=name;
+  const sc={title:'title',brief:'city',exp:'wild',draw:'draw',report:'city',results:'city',atlas:'title'}[name];
+  if(sc)Sound.setScene(sc);
+  renderStatus(); window.scrollTo(0,0);
+}
+function renderStatus(){
+  const st=$('#status'); st.textContent='';
+  if(S.screen==='exp'){
+    st.append(h('b',null,`Day ${S.day} of 3`),` · the ${ord(S.hour)} hour · bread `);
+    const sup=h('span',{class:'supplies','aria-label':`${4-S.day} days of bread left`});
+    for(let i=1;i<=3;i++) sup.append(h('span',{class:i>=S.day?'full':''}));
+    st.append(sup);
+  } else st.append('Purse: ',h('b',null,`${WORLD.coin} silver`));
+}
+$('#mute').textContent=Sound.on?'Sound on':'Sound off';
+$('#mute').onclick=()=>{Sound.ensure();$('#mute').textContent=Sound.toggle()?'Sound on':'Sound off';};
+
+/* ================= VELLUM + DRAWING PRIMITIVES ================= */
+const INK='#2a1c13', PENCIL='rgba(105,92,76,0.62)';
+function makeVellum(w,hgt,seed){
+  const c=document.createElement('canvas');c.width=w;c.height=hgt;const x=c.getContext('2d');const R=rng(seed);
+  const g=x.createRadialGradient(w*0.4,hgt*0.35,50,w*0.5,hgt*0.5,Math.max(w,hgt)*0.75);
+  g.addColorStop(0,'#f3e8cf');g.addColorStop(0.6,'#ebdcbc');g.addColorStop(1,'#d6c19a');x.fillStyle=g;x.fillRect(0,0,w,hgt);
+  for(let i=0;i<7;i++){const sx=R()*w,sy=R()*hgt,sr=60+R()*180;const sg=x.createRadialGradient(sx,sy,0,sx,sy,sr);sg.addColorStop(0,'rgba(160,120,70,0.07)');sg.addColorStop(0.7,'rgba(160,120,70,0.03)');sg.addColorStop(1,'rgba(160,120,70,0)');x.fillStyle=sg;x.fillRect(0,0,w,hgt);}
+  for(let i=0;i<w*hgt/90;i++){x.fillStyle=`rgba(${R()<0.5?'90,70,40':'255,250,235'},${R()*0.07})`;x.fillRect(R()*w,R()*hgt,1+R()*1.5,1+R()*1.5);}
+  x.strokeStyle='rgba(120,95,60,0.05)';x.lineWidth=1;for(let i=0;i<40;i++){x.beginPath();const yy=R()*hgt;x.moveTo(0,yy);x.bezierCurveTo(w*0.3,yy+R()*20-10,w*0.6,yy+R()*20-10,w,yy+R()*20-10);x.stroke();}
+  const v=x.createRadialGradient(w/2,hgt/2,Math.min(w,hgt)*0.35,w/2,hgt/2,Math.max(w,hgt)*0.72);v.addColorStop(0,'rgba(80,50,20,0)');v.addColorStop(1,'rgba(80,50,20,0.28)');x.fillStyle=v;x.fillRect(0,0,w,hgt);
+  return c;
+}
+const VELLUM_MAP=makeVellum(MW,MH,7), VELLUM_SKETCH=makeVellum(960,640,19);
+
+function wobblyLine(x,ax,ay,bx,by,seed,amp=1.6){
+  const R=rng(seed);x.beginPath();x.moveTo(ax+R()*amp-amp/2,ay+R()*amp-amp/2);
+  const n=3;for(let i=1;i<=n;i++){const t=i/n;x.lineTo(ax+(bx-ax)*t+(R()-0.5)*amp*2,ay+(by-ay)*t+(R()-0.5)*amp*2);}x.stroke();
+}
+/* coastline segments via marching squares on the cell-centre dual grid */
+const COAST=(function(){
+  const segs=[];
+  const E=(x,y)=>({top:[x+CS/2,y],right:[x+CS,y+CS/2],bottom:[x+CS/2,y+CS],left:[x,y+CS/2]});
+  const T={1:[['left','bottom']],2:[['bottom','right']],3:[['left','right']],4:[['top','right']],5:[['left','top'],['bottom','right']],6:[['top','bottom']],7:[['left','top']],8:[['left','top']],9:[['top','bottom']],10:[['top','right'],['left','bottom']],11:[['top','right']],12:[['left','right']],13:[['bottom','right']],14:[['left','bottom']]};
+  for(let r=-1;r<H;r++)for(let c=-1;c<W;c++){
+    const tl=+isW(c,r),tr=+isW(c+1,r),br=+isW(c+1,r+1),bl=+isW(c,r+1);
+    const idx=tl*8+tr*4+br*2+bl; if(!T[idx])continue;
+    const x=cx(c),y=cy(r),e=E(x,y);
+    const cells=[[c,r],[c+1,r],[c+1,r+1],[c,r+1]].filter(([a,b])=>inB(a,b));
+    for(const [p,q] of T[idx]) segs.push({a:e[p],b:e[q],cells,id:segs.length});
+  }
+  return segs;
+})();
+const coastKnown=seg=>seg.cells.filter(([a,b])=>S.revealed[key(a,b)]).length>=Math.min(3,seg.cells.length);
+
+function drawPencil(x,{fog=false,boat=false,alpha=1}={}){
+  x.save();x.globalAlpha=alpha;x.lineCap='round';x.lineJoin='round';
+  // water hatching
+  x.strokeStyle='rgba(105,92,76,0.32)';x.lineWidth=1;
+  for(const k in S.revealed){const [c,r]=unkey(k);if(!isW(c,r))continue;
+    for(let i=0;i<2;i++){const px=c*CS+10+hash(c,r,i)*34,py=r*CS+12+hash(c,r,i+9)*34;x.beginPath();x.moveTo(px,py);x.quadraticCurveTo(px+4,py-3,px+8,py);x.quadraticCurveTo(px+12,py+3,px+16,py);x.stroke();}}
+  // coast
+  x.strokeStyle=PENCIL;x.lineWidth=1.3;
+  for(const s of COAST) if(coastKnown(s)){wobblyLine(x,s.a[0],s.a[1],s.b[0],s.b[1],s.id*7+1,2.2);x.globalAlpha=alpha*0.5;wobblyLine(x,s.a[0],s.a[1],s.b[0],s.b[1],s.id*7+3,3);x.globalAlpha=alpha;}
+  // path
+  x.setLineDash([2,5]);x.strokeStyle='rgba(105,92,76,0.5)';x.lineWidth=1;x.beginPath();
+  S.path.forEach(([c,r],i)=>{const px=cx(c)+(hash(c,r,i)-0.5)*16,py=cy(r)+(hash(r,c,i)-0.5)*16;i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();x.setLineDash([]);
+  // soundings + notes
+  x.fillStyle='rgba(90,78,64,0.85)';x.font='italic 15px "IM Fell English", Georgia, serif';x.textAlign='center';x.textBaseline='middle';
+  for(const k in S.soundings){const [c,r]=unkey(k);x.fillText(String(S.soundings[k]),cx(c)+13,cy(r)-12);}
+  x.font='italic 14px "IM Fell English", Georgia, serif';
+  for(const id in S.found){const f=FEAT[id];const [c,r]=f.cells[Math.floor(f.cells.length/2)];x.fillText(f.note+(S.ashore[id]?' ✓':''),cx(c),cy(r)+(f.land?2:18));}
+  x.restore();
+  if(fog){
+    x.save();
+    for(let r=0;r<H;r++)for(let c=0;c<W;c++){ if(S.revealed[key(c,r)])continue;
+      x.fillStyle=`rgba(62,47,33,${0.86+hash(c,r,3)*0.06})`;x.fillRect(c*CS-1,r*CS-1,CS+2,CS+2);}
+    x.restore();
+  }
+  if(boat){
+    const [c,r]=S.boat;const bx=cx(c),by=cy(r);
+    x.save();x.translate(bx,by);x.fillStyle=INK;x.strokeStyle=INK;x.lineWidth=1.6;
+    x.beginPath();x.moveTo(-13,0);x.quadraticCurveTo(0,10,13,0);x.lineTo(-13,0);x.fill();
+    x.beginPath();x.moveTo(-6,-1);x.lineTo(-17,-9);x.moveTo(6,-1);x.lineTo(17,-9);x.stroke();
+    x.beginPath();x.arc(0,-7,3.2,0,Math.PI*2);x.fill();
+    x.restore();
+  }
+}
+
+/* ink icons */
+function drawIcon(x,type,px,py,s=1){
+  x.save();x.translate(px,py);x.scale(s,s);x.strokeStyle=INK;x.fillStyle=INK;x.lineWidth=1.6;x.lineCap='round';x.lineJoin='round';
+  const P=(pts,close=false,fill=false)=>{x.beginPath();pts.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));if(close)x.closePath();fill?x.fill():x.stroke();};
+  switch(type){
+    case'settlement':
+      P([[-15,9],[-15,0],[-9,-7],[-3,0],[-3,9]],true);P([[-2,9],[-2,2],[3,-4],[8,2],[8,9]],true);
+      P([[10,9],[10,-4],[16,-4],[16,9]],true);P([[9,-4],[13,-17],[17,-4]],true,true);
+      x.fillRect(-11,3,3,6);break;
+    case'sacred':
+      for(let i=0;i<5;i++){const a=Math.PI*(1.1+i*0.2),sx=Math.cos(a)*14,sy=Math.sin(a)*6+4;x.beginPath();x.moveTo(sx-2.5,sy+5);x.lineTo(sx-2,sy-7);x.quadraticCurveTo(sx,sy-10,sx+2,sy-7);x.lineTo(sx+2.5,sy+5);x.closePath();x.fill();}
+      x.setLineDash([1.5,3]);x.beginPath();x.ellipse(0,6,17,6,0,0,Math.PI*2);x.stroke();x.setLineDash([]);break;
+    case'peril':
+      P([[-16,9],[-11,-1],[-7,4],[-2,-9],[3,2],[7,-4],[15,9]]);
+      for(const [a,b] of [[-9,-12],[6,-13],[14,-6]]){P([[a-3,b],[a+3,b]]);P([[a,b-3],[a,b+3]]);}
+      for(let i=-12;i<12;i+=5)P([[i,7],[i+3,4]]);break;
+    case'timber':
+      for(const t of [-11,0,11]){const yy=t===0?-3:0;P([[t-6,yy+7],[t,yy-10],[t+6,yy+7]],true);P([[t-3,yy+1],[t,yy-4],[t+3,yy+1]]);P([[t,yy+7],[t,yy+11]]);}break;
+    case'quarry':
+      P([[-15,9],[-15,-3],[-7,-10],[7,-10],[15,-1],[15,9]]);
+      for(let i=-11;i<14;i+=4)P([[i,-6+Math.abs(i)*0.15],[i,9]]);
+      P([[-15,9],[15,9]]);break;
+    case'anchor':
+      x.beginPath();x.arc(0,-12,3,0,Math.PI*2);x.stroke();P([[0,-9],[0,11]]);P([[-7,-5],[7,-5]]);
+      x.beginPath();x.moveTo(-11,3);x.quadraticCurveTo(-8,12,0,11);x.quadraticCurveTo(8,12,11,3);x.stroke();
+      P([[-11,3],[-13,7],[-8,5]],true,true);P([[11,3],[13,7],[8,5]],true,true);break;
+    case'ford':
+      for(const yy of [-7,7]){x.beginPath();x.moveTo(-16,yy);for(let i=-16;i<16;i+=8){x.quadraticCurveTo(i+2,yy-4,i+4,yy);x.quadraticCurveTo(i+6,yy+4,i+8,yy);}x.stroke();}
+      x.setLineDash([2,3]);P([[-3,-12],[-3,12]]);P([[3,-12],[3,12]]);x.setLineDash([]);break;
+    case'marsh':
+      for(const bx of [-11,0,11]){P([[bx,7],[bx-5,-3]]);P([[bx,7],[bx,-8]]);P([[bx,7],[bx+5,-3]]);}
+      P([[-16,10],[-6,10]]);P([[-2,10],[8,10]]);P([[10,12],[16,12]]);break;
+    case'ruin':
+      P([[-8,10],[-8,-7],[-5,-10],[-2,-6],[1,-11],[4,-6],[8,-8],[8,10]]);
+      x.beginPath();x.moveTo(-3,10);x.lineTo(-3,3);x.arc(0,3,3,Math.PI,0);x.lineTo(3,10);x.stroke();
+      x.fillRect(10,7,4,3);x.fillRect(-15,8,4,2);P([[-18,11],[18,11]]);break;
+    case'serpent':
+      x.lineWidth=2;x.beginPath();x.moveTo(-19,5);x.quadraticCurveTo(-14,-9,-9,5);x.moveTo(-5,5);x.quadraticCurveTo(0,-11,5,5);x.moveTo(9,5);x.quadraticCurveTo(12,-7,15,-6);x.quadraticCurveTo(20,-6,19,-1);x.stroke();
+      x.beginPath();x.arc(16,-4,1,0,Math.PI*2);x.fill();x.lineWidth=1;
+      for(let i=-20;i<20;i+=6)P([[i,8],[i+3,8]]);break;
+  }
+  x.restore();
+}
+const ICONS=[['settlement','Village'],['sacred','Stones'],['peril','Peril'],['timber','Timber'],['quarry','Stone'],['anchor','Deep'],['ford','Ford'],['marsh','Marsh'],['ruin','Ruin'],['serpent','Serpents']];
+
+function drawCompass(x,px,py,r){
+  x.save();x.translate(px,py);x.strokeStyle=INK;x.fillStyle=INK;x.lineWidth=1;
+  x.beginPath();x.arc(0,0,r,0,Math.PI*2);x.stroke();x.beginPath();x.arc(0,0,r*0.82,0,Math.PI*2);x.stroke();
+  for(let i=0;i<8;i++){const a=i*Math.PI/4-Math.PI/2,L=i%2?r*0.5:r*0.95,wd=i%2?r*0.1:r*0.16;
+    const tx=Math.cos(a)*L,ty=Math.sin(a)*L,lx=Math.cos(a-Math.PI/2)*wd,ly=Math.sin(a-Math.PI/2)*wd;
+    x.beginPath();x.moveTo(0,0);x.lineTo(lx,ly);x.lineTo(tx,ty);x.closePath();x.fill();
+    x.beginPath();x.moveTo(0,0);x.lineTo(-lx,-ly);x.lineTo(tx,ty);x.closePath();x.stroke();}
+  x.font=`${Math.round(r*0.5)}px "IM Fell English SC", Georgia, serif`;x.textAlign='center';x.textBaseline='bottom';x.fillText('N',0,-r-3);
+  x.restore();
+}
+function drawCartouche(x,title,sub){
+  const X=690,Y=14,Wd=256,Hg=86;x.save();x.fillStyle='rgba(244,234,211,0.82)';x.fillRect(X,Y,Wd,Hg);
+  x.strokeStyle=INK;x.lineWidth=1.6;x.strokeRect(X,Y,Wd,Hg);x.lineWidth=0.8;x.strokeRect(X+5,Y+5,Wd-10,Hg-10);
+  for(const [a,b,s1,s2] of [[X,Y,1,1],[X+Wd,Y,-1,1],[X,Y+Hg,1,-1],[X+Wd,Y+Hg,-1,-1]]){x.beginPath();x.arc(a+s1*5,b+s2*5,7,0,Math.PI*2);x.stroke();}
+  x.fillStyle=INK;x.textAlign='center';x.textBaseline='middle';
+  x.font='28px "IM Fell English SC", Georgia, serif';x.fillText(title||'Untitled',X+Wd/2,Y+34,Wd-24);
+  x.font='italic 14px "IM Fell English", Georgia, serif';x.fillText(sub,X+Wd/2,Y+62,Wd-24);x.restore();
+}
+function drawScale(x){
+  const X=764,Y=632;x.save();x.strokeStyle=INK;x.fillStyle=INK;x.lineWidth=1;
+  for(let i=0;i<4;i++){x.strokeRect(X+i*36,Y,36,6);if(i%2===0)x.fillRect(X+i*36,Y,36,6);}
+  x.font='italic 13px "IM Fell English", Georgia, serif';x.textAlign='center';x.fillText('0',X,Y-6);x.fillText('1 league',X+144,Y-6);x.restore();
+}
+
+/* stroke renderer shared by map + sketch */
+function drawStroke(x,m){
+  const p=m.pts;if(!p.length)return;
+  x.save();x.lineCap='round';x.lineJoin='round';
+  if(m.tool==='wash'){x.globalCompositeOperation='multiply';x.strokeStyle='rgba(95,131,150,0.22)';x.lineWidth=20;x.beginPath();p.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.stroke();x.restore();return;}
+  if(m.tool==='border'){x.strokeStyle='rgba(138,42,34,0.85)';x.lineWidth=2.6;x.setLineDash([11,6]);x.beginPath();p.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.stroke();x.restore();return;}
+  const base=m.tool==='fine'?1.1:2.3;x.strokeStyle=INK;x.fillStyle=INK;x.globalAlpha=0.92;
+  if(p.length===1){x.beginPath();x.arc(p[0][0],p[0][1],base*0.8,0,Math.PI*2);x.fill();x.restore();return;}
+  x.beginPath();x.arc(p[0][0],p[0][1],base*0.75,0,Math.PI*2);x.fill();
+  for(let i=1;i<p.length;i++){const [a,b]=p[i-1],[c,d]=p[i];const len=Math.hypot(c-a,d-b);x.lineWidth=Math.max(base*0.45,base*(1.15-Math.min(len,14)/20));x.beginPath();x.moveTo(a,b);x.lineTo(c,d);x.stroke();}
+  x.restore();
+}
+
+/* ================= TITLE ================= */
+function drawTitleCanvas(){
+  const c=$('#title-canvas'),x=c.getContext('2d');x.drawImage(VELLUM_MAP,0,0);
+  drawCompass(x,480,330,120);
+  x.save();x.fillStyle='rgba(42,28,19,0.55)';x.font='italic 26px "IM Fell English", Georgia, serif';x.textAlign='center';x.fillText('Lake Kalvas: unsurveyed',480,520);x.restore();
+  drawCartouche(x,'Terra Incognita','the eastern frontier of Aster');
+}
+
+/* ================= BRIEF ================= */
+const ENCOUNTERS=[
+ {id:'bribe',f:'guild',who:'Marta Hollin, Speaker of the Guild Coalition',say:'The North Wood is good timber, and the quarrymen want those grey cliffs everyone talks about. If your map showed the North Wood inside a Guild charter line, there\'s forty silver in it. Now, not later.',
+  opts:[['take','Take the forty silver'],['decline','Decline']]},
+ {id:'promise',f:'druids',who:'Elder Oskari, of the Circle of the Grove',say:'There is an island on Kalvas that the lake keeps for itself. Some places are not improved by being known.',
+  opts:[['promise','Promise to leave it off'],['none','Promise nothing']]},
+ {id:'commons',f:'commons',who:'Ilse Varro, Speaker of the Commons\' House',say:'My grandmother was born in old Kalvas village, before the lord\'s dam drowned it. If you see the spire, put it on the map. People forget what water covers.',
+  opts:[['ok','I\'ll look for it']]},
+ {id:'envoy',f:'ostmarch',who:'A soft-spoken traveller with Ostmarch rings, at the Heron inn',say:'Maps travel. If a copy of yours ever wished to travel east, I pay sixty silver, and no one hears of it.',
+  opts:[['ok','Say nothing, and finish your drink']]},
+];
+function renderBrief(){
+  const box=$('#encounters');box.textContent='';
+  for(const e of ENCOUNTERS){const F=FACTIONS[e.f];
+    const cur=e.id==='bribe'?S.deals.bribe:e.id==='promise'?S.deals.promise:(S.deals[e.id]?'ok':null);
+    const btns=e.opts.map(([v,l])=>h('button',{class:'choice',type:'button','aria-pressed':String(cur===v),onclick:()=>{
+      if(e.id==='bribe'){ if(S.deals.bribe!=='take'&&v==='take'){WORLD.coin+=40;} if(S.deals.bribe==='take'&&v!=='take'){WORLD.coin-=40;} S.deals.bribe=v; }
+      else if(e.id==='promise') S.deals.promise=v; else S.deals[e.id]=true;
+      Sound.rustle();renderBrief();renderStatus();}},l));
+    box.append(h('div',{class:'encounter'},h('div',{class:'wax',style:`--c:${F.color}`},F.glyph),h('div',null,h('div',{class:'who'},e.who),h('q',null,e.say),h('div',{class:'row'},btns))));
+  }
+  const ok=S.deals.bribe&&S.deals.promise;
+  $('#set-out').disabled=!ok;$('#brief-hint').hidden=!!ok;
+}
+$('#set-out').onclick=()=>{
+  S.log=[];addLog(WEATHER[1],'weather');addLog('You push off from Rautsalo at first light with three days of bread, a plumb line, and a book of blank pages.');
+  reveal();show('exp');renderExp();
+};
+
+/* ================= EXPEDITION ================= */
+const vision=()=>(S.day===2&&S.hour<10)?0:1;
+function addLog(text,kind){S.log.unshift({t:`Day ${S.day}, ${ord(S.hour)} hour`,text,kind});}
+function reveal(){
+  const v=vision(),[bc,br]=S.boat;
+  for(let dr=-v;dr<=v;dr++)for(let dc=-v;dc<=v;dc++){const c=bc+dc,r=br+dr;if(inB(c,r))S.revealed[key(c,r)]=1;}
+  S.revealed[key(bc,br)]=1;
+  for(const f of FEATURES){ if(S.found[f.id])continue;
+    if(f.cells.some(([c,r])=>cheb(c,r,bc,br)<=v)){S.found[f.id]=1;addLog(f.glance,'glance');}
+  }
+}
+function advance(hrs){
+  S.hour+=hrs;
+  while(S.hour>=20){
+    S.hour=6+(S.hour-20); S.day++;
+    if(S.day>3){ S.day=3;S.hour=20; endSurvey(true); return false; }
+    addLog(NIGHT[S.day-1],'night'); addLog(WEATHER[S.day],'weather');
+  }
+  Sound.setNight(S.hour>=19);
+  return true;
+}
+function rowTo(c,r){
+  if(S.ended)return; const [bc,br]=S.boat;
+  if(!isW(c,r)||cheb(c,r,bc,br)!==1)return;
+  S.boat=[c,r];S.path.push([c,r]);Sound.oar();
+  let cost=1;const f=CELLFEAT[key(c,r)];
+  if(f&&!f.land&&!S.entered[f.id]){S.entered[f.id]=1;S.found[f.id]=1;addLog(f.detail,'detail');if(f.id==='shoals'){cost+=2;Sound.scrape();}}
+  if(advance(cost)){reveal();renderExp();}
+}
+function takeSounding(){
+  const k=key(...S.boat);if(S.soundings[k]!=null||S.ended)return;
+  S.soundings[k]=DEPTH[k];Sound.plop();
+  const d=DEPTH[k];addLog(`Sounding: ${d} fathom${d===1?'':'s'}. ${d>=9?'The line runs and runs before it slackens.':d<=1?'The lead hits bottom almost at once.':'The lead comes up with grey silt on its tallow.'}`,'sound');
+  if(advance(1)){reveal();renderExp();}
+}
+function goAshore(f){
+  if(S.ended)return;S.ashore[f.id]=1;S.found[f.id]=1;addLog(f.detail,'ashore');Sound.rustle();
+  if(advance(2)){reveal();renderExp();}
+}
+function endSurvey(forced){
+  S.ended=true;
+  S.endText=forced?'The bread ran out on the third evening, so you rowed back to Rautsalo by starlight. Now spread the vellum. Your field notes lie faint beneath it.':'You row back to Rautsalo with the notebook full. Now spread the vellum. Your field notes lie faint beneath it.';
+  enterDraw();
+}
+function renderExp(){
+  const cv=$('#chart'),x=cv.getContext('2d');x.setTransform(1.5,0,0,1.5,0,0);x.drawImage(VELLUM_MAP,0,0);
+  drawPencil(x,{fog:true,boat:true});
+  const [c,r]=S.boat,reg=regionOf(c,r);
+  $('#exp-when').textContent=`Day ${S.day}, the ${ord(S.hour)} hour`;
+  $('#place').textContent=REGION_NAME[reg];
+  const desc=$('#desc');desc.textContent='';
+  desc.append(h('p',{class:'time'},timePhrase(S.hour)+(vision()===0?' The fog closes everything to an arm\'s length.':'')));
+  const pool=REGION_TEXT[reg];desc.append(h('p',null,pool[Math.floor(hash(c,r,S.day)*pool.length)]));
+  const near=FEATURES.filter(f=>S.found[f.id]&&f.cells.some(([a,b])=>cheb(a,b,c,r)<=1)).map(f=>f.glance);
+  if(near.length)desc.append(h('p',null,near[0]));
+  const k=key(c,r);if(S.soundings[k]!=null)desc.append(h('p',{class:'time'},`You sounded ${S.soundings[k]} fathoms here.`));
+  const act=$('#actions');act.textContent='';
+  act.append(h('button',{class:'btn',type:'button',disabled:S.soundings[k]!=null,onclick:takeSounding},S.soundings[k]!=null?'Already sounded here':'Take a sounding (1 hour)'));
+  for(const f of FEATURES){ if(!f.land||!S.found[f.id]||S.ashore[f.id])continue;
+    if(f.cells.some(([a,b])=>cheb(a,b,c,r)<=1)) act.append(h('button',{class:'btn ghost',type:'button',onclick:()=>goAshore(f)},`Go ashore at ${f.name} (2 hours)`));}
+  act.append(h('button',{class:'btn ghost',type:'button',onclick:()=>endSurvey(false)},'Row home and draw the map'));
+  const log=$('#log');log.textContent='';S.log.slice(0,40).forEach(l=>log.append(h('div',null,h('span',{class:'t'},l.t),l.text)));
+  renderStatus();
+}
+$('#chart').addEventListener('click',e=>{
+  const rc=e.currentTarget.getBoundingClientRect();
+  const mx=(e.clientX-rc.left)/rc.width*MW,my=(e.clientY-rc.top)/rc.height*MH;
+  rowTo(Math.floor(mx/CS),Math.floor(my/CS));
+});
+document.addEventListener('keydown',e=>{
+  if(S.screen!=='exp'||e.target.closest('input,textarea,select'))return;
+  const d={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];
+  if(d){e.preventDefault();rowTo(S.boat[0]+d[0],S.boat[1]+d[1]);}
+});
+
+/* ================= DRAWING ================= */
+let PENCIL_CACHE=null;
+let mapTool='pen',stampType='settlement',sketchTool='pen';
+function enterDraw(){
+  PENCIL_CACHE=document.createElement('canvas');PENCIL_CACHE.width=MW;PENCIL_CACHE.height=MH;drawPencil(PENCIL_CACHE.getContext('2d'),{alpha:0.75});
+  $('#draw-intro').textContent=S.endText;
+  $('#map-title').value=S.map.title;
+  buildTools();buildIcons();renderKnown();renderDeals();buildSketchSubjects();
+  selectTab('map');show('draw');renderMap();renderSketch();
+}
+function renderMapTo(x,{pencil}){
+  x.drawImage(VELLUM_MAP,0,0);
+  if(pencil&&PENCIL_CACHE)x.drawImage(PENCIL_CACHE,0,0);
+  const M=S.map.marks;
+  M.filter(m=>m.kind==='stroke'&&m.tool==='wash').forEach(m=>drawStroke(x,m));
+  M.filter(m=>m.kind==='stroke'&&m.tool!=='wash'&&m.tool!=='border').forEach(m=>drawStroke(x,m));
+  M.filter(m=>m.kind==='stroke'&&m.tool==='border').forEach(m=>drawStroke(x,m));
+  x.save();x.fillStyle=INK;x.font='italic 16px "IM Fell English", Georgia, serif';x.textAlign='center';x.textBaseline='middle';
+  M.filter(m=>m.kind==='sounding').forEach(m=>{const [c,r]=unkey(m.k);x.fillText(String(S.soundings[m.k]),cx(c)+13,cy(r)-12);});x.restore();
+  M.filter(m=>m.kind==='stamp').forEach(m=>drawIcon(x,m.type,m.x,m.y,1));
+  x.save();x.fillStyle=INK;x.font='italic 18px "IM Fell English", Georgia, serif';x.textAlign='left';x.textBaseline='middle';
+  M.filter(m=>m.kind==='label').forEach(m=>x.fillText(m.text,m.x,m.y));x.restore();
+  drawCartouche(x,S.map.title,'Surveyed by Carr, for the Crown of Aster');drawCompass(x,84,578,46);drawScale(x);
+}
+function renderMap(){const x=$('#mapc').getContext('2d');x.setTransform(2,0,0,2,0,0);renderMapTo(x,{pencil:$('#show-pencil').checked});}
+function renderSketchTo(x){x.drawImage(VELLUM_SKETCH,0,0);S.sketch.marks.forEach(m=>{if(m.tool==='wash')drawStroke(x,m)});S.sketch.marks.forEach(m=>{if(m.tool!=='wash')drawStroke(x,m)});}
+function renderSketch(){const x=$('#sketchc').getContext('2d');x.setTransform(2,0,0,2,0,0);renderSketchTo(x);}
+
+const MAP_TOOLS=[['pen','Pen'],['fine','Fine nib'],['wash','Water wash'],['border','Border line'],['label','Label'],['sounding','Soundings'],['stamp','Mark']];
+function buildTools(){
+  const mt=$('#map-tools');mt.textContent='';
+  MAP_TOOLS.forEach(([id,l])=>{ if(id==='stamp')return;
+    mt.append(h('button',{class:'tool',type:'button','aria-pressed':String(mapTool===id),onclick:()=>{mapTool=id;buildTools();buildIcons();}},id==='border'?h('span',{class:'sw',style:'background:repeating-linear-gradient(90deg,#8a2a22 0 5px,transparent 5px 8px)'}):id==='wash'?h('span',{class:'sw',style:'background:#5f8396;height:8px;opacity:.6'}):null,l));});
+  mt.append(h('button',{class:'tool',type:'button',onclick:()=>{const m=S.map.marks.pop();if(m){Sound.rustle();renderMap();renderKnown();}}},'Undo'));
+  const st=$('#sketch-tools');st.textContent='';
+  [['pen','Pen'],['fine','Fine nib'],['wash','Wash']].forEach(([id,l])=>st.append(h('button',{class:'tool',type:'button','aria-pressed':String(sketchTool===id),onclick:()=>{sketchTool=id;buildTools();}},l)));
+  st.append(h('button',{class:'tool',type:'button',onclick:()=>{if(S.sketch.marks.pop()){Sound.rustle();renderSketch();}}},'Undo'));
+}
+function buildIcons(){
+  const box=$('#icons');box.textContent='';
+  ICONS.forEach(([t,l])=>{const c=h('canvas',{width:72,height:72});const x=c.getContext('2d');x.setTransform(2,0,0,2,0,0);drawIcon(x,t,18,18,0.85);
+    box.append(h('button',{class:'icon-btn',type:'button',title:l,'aria-pressed':String(mapTool==='stamp'&&stampType===t),onclick:()=>{mapTool='stamp';stampType=t;buildTools();buildIcons();}},c,l));});
+}
+function renderKnown(){
+  const ul=$('#known');ul.textContent='';const ids=Object.keys(S.found);
+  if(!ids.length){ul.append(h('li',null,'Nothing. You never left the shallows.'));return;}
+  const A=analyze();ids.forEach(id=>ul.append(h('li',{class:A.markedIds.has(id)?'done':''},FEAT[id].name[0].toUpperCase()+FEAT[id].name.slice(1))));
+}
+function renderDeals(){
+  const d=$('#deals');d.textContent='';
+  d.append(h('p',null,S.deals.bribe==='take'?'You took the Guild\'s forty silver for a charter line around the North Wood.':'You refused the Guild\'s silver.'));
+  d.append(h('p',null,S.deals.promise==='promise'?'You promised Elder Oskari to leave the island off.':'You promised the druids nothing.'));
+  d.append(h('p',null,'Ilse Varro asked for the drowned spire. The envoy at the Heron pays sixty for a copy.'));
+}
+function buildSketchSubjects(){
+  const sel=$('#sketch-subject');sel.textContent='';
+  const opts=[['open','The open water']].concat(FEATURES.filter(f=>S.found[f.id]).map(f=>[f.id,f.name[0].toUpperCase()+f.name.slice(1)]));
+  opts.forEach(([v,l])=>sel.append(h('option',{value:v},l)));
+  const best=FEATURES.find(f=>S.ashore[f.id]||S.entered[f.id]);sel.value=S.sketch.subject||(best?best.id:'open');S.sketch.subject=sel.value;renderPrompt();
+}
+function renderPrompt(){const id=S.sketch.subject;const f=FEAT[id];
+  $('#sketch-prompt').textContent=f?((S.ashore[id]||S.entered[id])?f.detail:f.glance+' You only saw it from the boat.'):'Open water. The shores fall back on every side and the lake becomes sky. Only the oars and your own breath.';}
+$('#sketch-subject').onchange=e=>{S.sketch.subject=e.target.value;renderPrompt();};
+$('#show-pencil').onchange=renderMap;
+$('#map-title').oninput=e=>{S.map.title=e.target.value;renderMap();};
+function selectTab(t){$('#tab-map').setAttribute('aria-selected',String(t==='map'));$('#tab-sketch').setAttribute('aria-selected',String(t==='sketch'));$('#page-map').hidden=t!=='map';$('#page-sketch').hidden=t!=='sketch';}
+$('#tab-map').onclick=()=>{selectTab('map');Sound.rustle();};
+$('#tab-sketch').onclick=()=>{selectTab('sketch');Sound.rustle();renderSketch();};
+
+function attachPen(canvas,getW,getH,getTool,list,rerender,onStamp){
+  let cur=null,last=null,lastT=0,raf=0;
+  const pt=e=>{const rc=canvas.getBoundingClientRect();return[(e.clientX-rc.left)/rc.width*getW(),(e.clientY-rc.top)/rc.height*getH()];};
+  canvas.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;const p=pt(e);const tool=getTool();
+    if(onStamp&&onStamp(tool,p,e))return;
+    e.preventDefault();canvas.setPointerCapture(e.pointerId);
+    cur={kind:'stroke',tool,pts:[p.map(v=>Math.round(v*10)/10)]};list().push(cur);last=p;lastT=performance.now();Sound.rustle();rerender();
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!cur)return;const p=pt(e);const d=Math.hypot(p[0]-last[0],p[1]-last[1]);if(d<1.4)return;
+    const now=performance.now();Sound.scratch(d/Math.max(4,now-lastT)*16);lastT=now;last=p;
+    cur.pts.push(p.map(v=>Math.round(v*10)/10));
+    if(!raf)raf=requestAnimationFrame(()=>{raf=0;rerender();});
+  });
+  const end=()=>{if(!cur)return;cur=null;Sound.scratch(0);rerender();if(canvas.id==='mapc')renderKnown();};
+  canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
+}
+attachPen($('#mapc'),()=>MW,()=>MH,()=>mapTool,()=>S.map.marks,renderMap,(tool,p,e)=>{
+  if(tool==='stamp'){S.map.marks.push({kind:'stamp',type:stampType,x:Math.round(p[0]),y:Math.round(p[1])});Sound.stamp();renderMap();renderKnown();return true;}
+  if(tool==='sounding'){let best=null,bd=34;for(const k in S.soundings){const [c,r]=unkey(k);const d=Math.hypot(cx(c)+13-p[0],cy(r)-12-p[1]);if(d<bd){bd=d;best=k;}}
+    if(best&&!S.map.marks.some(m=>m.kind==='sounding'&&m.k===best)){S.map.marks.push({kind:'sounding',k:best});Sound.stamp();renderMap();}
+    return true;}
+  if(tool==='label'){openLabel(p,e);return true;}
+  return false;
+});
+attachPen($('#sketchc'),()=>960,()=>640,()=>sketchTool,()=>S.sketch.marks,renderSketch,null);
+function openLabel(p){
+  const wrap=$('#map-wrap');wrap.querySelector('.label-input')?.remove();
+  const inp=h('input',{class:'label-input',maxlength:'32',placeholder:'Name this place','aria-label':'Label text'});
+  inp.style.left=(p[0]/MW*100)+'%';inp.style.top=(p[1]/MH*100)+'%';wrap.append(inp);setTimeout(()=>inp.focus(),0);
+  let done=false;const commit=()=>{if(done)return;done=true;const t=inp.value.trim();inp.remove();if(t){S.map.marks.push({kind:'label',text:t,x:Math.round(p[0]),y:Math.round(p[1])});Sound.stamp();renderMap();renderKnown();}};
+  inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')commit();if(ev.key==='Escape'){done=true;inp.remove();}});inp.addEventListener('blur',commit);
+}
+
+/* ================= ANALYSIS ================= */
+function nearestFeature(px,py,maxCells){
+  let best=null,bd=Infinity;for(const f of FEATURES)for(const [c,r] of f.cells){const d=Math.hypot(cx(c)-px,cy(r)-py)/CS;if(d<bd){bd=d;best=f;}}
+  return bd<=maxCells?best:null;
+}
+function placeName(px,py){const c=Math.max(0,Math.min(W-1,Math.floor(px/CS))),r=Math.max(0,Math.min(H-1,Math.floor(py/CS)));return `${isW(c,r)?'on the water':'on land'}, ${REGION_NAME[regionOf(c,r)].toLowerCase()}`;}
+function analyze(){
+  const M=S.map.marks,markedIds=new Set();
+  const stamps=M.filter(m=>m.kind==='stamp').map(m=>{const f=nearestFeature(m.x,m.y,1.6);if(f&&S.found[f.id])markedIds.add(f.id);return{icon:m.type,near:f?f.name:null,nearKnownToCarr:f?!!S.found[f.id]:false,where:placeName(m.x,m.y)};});
+  const labels=M.filter(m=>m.kind==='label').map(m=>{const f=nearestFeature(m.x+30,m.y,1.6);if(f&&S.found[f.id])markedIds.add(f.id);return{text:m.text,near:f?f.name:null,where:placeName(m.x,m.y)};});
+  const borders=M.filter(m=>m.kind==='stroke'&&m.tool==='border').map(m=>{const near=new Set();m.pts.forEach(([a,b])=>{const f=nearestFeature(a,b,1.0);if(f)near.add(f.name);});return{points:m.pts.length,passesNear:[...near],from:placeName(...m.pts[0]),to:placeName(...m.pts[m.pts.length-1])};});
+  const pens=M.filter(m=>m.kind==='stroke'&&(m.tool==='pen'||m.tool==='fine'));const pts=pens.flatMap(m=>m.pts);
+  const known=COAST.filter(coastKnown);let covered=0;
+  for(const s of known){const mx=(s.a[0]+s.b[0])/2,my=(s.a[1]+s.b[1])/2;if(pts.some(([a,b])=>Math.abs(a-mx)<24&&Math.abs(b-my)<24))covered++;}
+  const invented=pts.filter(([a,b])=>{const c=Math.floor(a/CS),r=Math.floor(b/CS);return inB(c,r)&&!S.revealed[key(c,r)];}).length;
+  const washes=M.filter(m=>m.kind==='stroke'&&m.tool==='wash').length;
+  const inked=M.filter(m=>m.kind==='sounding').map(m=>S.soundings[m.k]);
+  return{markedIds,stamps,labels,borders,penStrokes:pens.length,coastCoverage:known.length?Math.round(covered/known.length*100):0,
+    inventedInkShare:pts.length?Math.round(invented/pts.length*100):0,washes,soundingsInked:inked,soundingsTaken:Object.keys(S.soundings).length,
+    found:Object.keys(S.found).map(id=>FEAT[id].name),omitted:Object.keys(S.found).filter(id=>!markedIds.has(id)).map(id=>FEAT[id].name),
+    fabricated:stamps.filter(s=>!s.near||!s.nearKnownToCarr).map(s=>`${s.icon} ${s.where}`)};
+}
+
+/* ================= REPORT ================= */
+$('#to-city').onclick=()=>{renderReport();show('report');};
+function exportCanvas(w,hgt,draw,scale=1){const c=document.createElement('canvas');c.width=w*scale;c.height=hgt*scale;const x=c.getContext('2d');x.setTransform(scale,0,0,scale,0,0);draw(x);return c;}
+function renderReport(){
+  const th=$('#thumbs');th.textContent='';
+  th.append(exportCanvas(MW,MH,x=>renderMapTo(x,{pencil:false}),0.5));
+  if(S.sketch.marks.length)th.append(exportCanvas(960,640,renderSketchTo,0.5));
+  const seats=$('#seats');seats.textContent='';
+  FORDER.forEach(id=>{const F=FACTIONS[id];const foreign=id==='ostmarch';
+    const cb=h('input',{type:'checkbox',id:'copy-'+id,checked:S.copies[id],disabled:id==='crown',onchange:e=>{S.copies[id]=e.target.checked;Sound.rustle();}});
+    seats.append(h('div',{class:'seat'+(foreign?' foreign':'')},
+      h('div',{class:'top'},h('div',{class:'wax',style:`--c:${F.color}`},F.glyph),h('div',null,h('div',{class:'nm'},F.name),h('div',{class:'ag'},F.who))),
+      h('label',{class:'check',for:'copy-'+id},cb,id==='crown'?'Receives the fair copy (commissioned it)':foreign?'Sell a copy in secret, 60 silver':'Make them a copy')));
+  });
+  $('#note').value=S.note;
+}
+$('#note').oninput=e=>{S.note=e.target.value;};
+
+/* dictation for the cover note */
+(async()=>{try{const d=await window.claude?.use?.('dictation');if(!d)return;const mic=$('#mic');mic.hidden=false;let listening=false;
+  d.onFinal(({text})=>{const t=$('#note');t.value=(t.value?t.value.trimEnd()+' ':'')+text;S.note=t.value;});
+  d.onState(({state})=>{listening=state==='listening'||state==='starting';mic.textContent=listening?'Stop dictating':'Dictate';mic.setAttribute('aria-pressed',String(listening));});
+  mic.onclick=()=>{if(listening){d.stop().catch(()=>{});return;}d.start().catch(e=>{if(e&&e.code==='not_granted')mic.hidden=true;});};
+}catch{}})();
+
+/* ================= THE LEVER ================= */
+const DELIB=['Candles are lit. Your map passes from hand to hand.','Someone holds it up to the window.','Pens scratch. Someone asks for the soundings again.','A long silence, then whispering.','A clerk is sent running for an older map.'];
+function buildPrompt(A,imgCount){
+  const fac=FORDER.map(id=>`- ${id}: ${FACTIONS[id].name}, ${FACTIONS[id].who}. Agenda: ${FACTIONS[id].agenda}`).join('\n');
+  const chron=WORLD.chronicle.length?WORLD.chronicle.slice(-12).map(c=>`- ${c}`).join('\n'):'- (Nothing yet. This is Carr\'s first commission for the Council.)';
+  const stand=FORDER.map(id=>`${id}: ${WORLD.standing[id]}`).join(', ');
+  const truth=FEATURES.map(f=>`- ${f.truth}`).join('\n');
+  const copies=FORDER.map(id=>`${id}: ${S.copies[id]?'RECEIVES A COPY':'no copy'}`).join(', ');
+  return `You are the game master of "Carr the Grapher", a quiet game about a cartographer whose maps change the world. Carr has just returned from surveying Lake Kalvas, on the eastern frontier of the realm of Aster, and hands over a hand-drawn fair copy${imgCount?` (image 1${imgCount>1?'; image 2 is Carr\'s landscape sketch':''})`:' (no image attached; rely on the summary below)'}. Play how each faction reads it.
+
+FACTIONS
+${fac}
+
+THE WORLD SO FAR (chronicle of earlier consequences)
+${chron}
+Current standing with Carr (-10..10): ${stand}
+
+THE TRUTH ABOUT LAKE KALVAS (the factions do NOT know this; they know only what the map and rumour show)
+${truth}
+
+WHAT CARR DID ON THE SURVEY
+- Days used: ${S.day} of 3. Soundings taken: ${A.soundingsTaken}. Went ashore at: ${Object.keys(S.ashore).map(id=>FEAT[id].name).join(', ')||'nowhere'}.
+- Features Carr found: ${A.found.join(', ')||'none'}.
+
+WHAT THE FAIR COPY SHOWS (summary of marks; the image is authoritative for style and legibility)
+- Title on the cartouche: "${S.map.title}".
+- Icons: ${A.stamps.length?A.stamps.map(s=>`${s.icon} ${s.where}${s.near?` (near ${s.near})`:' (near nothing Carr found)'}`).join('; '):'none'}.
+- Written labels: ${A.labels.length?A.labels.map(l=>`"${l.text}" ${l.where}`).join('; '):'none'}.
+- Border lines (dashed red): ${A.borders.length?A.borders.map(b=>`from ${b.from} to ${b.to}, passing near ${b.passesNear.join(', ')||'nothing named'}`).join('; '):'none'}.
+- Depth soundings inked onto the map: ${A.soundingsInked.length?A.soundingsInked.join(', ')+' fathoms':'none'}.
+- Ink strokes: ${A.penStrokes}; about ${A.coastCoverage}% of the coastline Carr actually saw is drawn; ${A.inventedInkShare}% of the ink lies in places Carr never saw. Water washes: ${A.washes}.
+- Found but left off the map: ${A.omitted.join(', ')||'nothing'}.
+- Marks that match nothing Carr found (invented or guessed): ${A.fabricated.join('; ')||'none'}.
+
+DEALS MADE BEFORE THE SURVEY
+- Guild bribe of 40 silver to draw the North Wood inside a Guild charter line: ${S.deals.bribe==='take'?'TAKEN (already paid)':'refused'}.
+- Druid Elder Oskari asked Carr to leave Hallow Isle off the map: ${S.deals.promise==='promise'?'Carr PROMISED':'Carr promised nothing'}.
+- Commons Speaker Ilse Varro asked Carr to mark the drowned spire of old Kalvas.
+- An Ostmarch envoy offered 60 silver for a secret copy.
+
+DELIVERY
+Copies: ${copies}.
+Carr's cover note: ${S.note.trim()?`"${S.note.trim().slice(0,600)}"`:'(none)'}
+
+RULES
+- Each faction reads ONLY what is on the map and in the cover note, through its own agenda. Unmarked places are unknown to them. They may over-read blanks, misread icons, take labels literally, notice care or carelessness in the drawing, or act on a mark in a way Carr did not intend.
+- Be surprising but legible: every reaction must follow from specific marks or omissions plus that faction's agenda. Don't make everyone pleased; the factions want different things, so pleasing one should often cost another.
+- A faction with no copy reacts only to rumour (shorter), and may resent being left out. A secret sale to Ostmarch may or may not leak.
+- Invented marks can have consequences when the truth surfaces; you may hint at this.
+- The Crown pays the commission fee: 20 to 80 silver depending on usefulness. Others may pay, offer bribes or make demands (coin may be negative for a fine). Ostmarch pays exactly 60 only if sold a copy. Do not pay the Guild bribe again.
+- standing_change is an integer from -2 to 2.
+- Write in English, in a voice that suits an old-fashioned, moody world of ink and vellum. No modern idiom.
+
+Reply with ONLY a JSON object in this shape:
+{"readings":[{"faction":"crown","received":true,"heading":"3-7 word heading","voice":"2-4 sentences in this faction's own voice, reacting to specific marks","conclusion":"one sentence: what they now believe about Lake Kalvas","action":"one sentence: what they will do about it","standing_change":1,"coin":45}],
+ "events":["2-4 short past-tense chronicle lines: consequences in the world"],
+ "rumor":"one tavern rumour about Carr",
+ "next":{"faction":"guild","title":"short commission title","pitch":"two sentences offering Carr a new commission to map somewhere unmapped"}}
+Include exactly one reading for each of: crown, guild, commons, druids, ostmarch, in that order.`;
+}
+function validate(r){
+  if(!r||!Array.isArray(r.readings))return null;
+  const by={};r.readings.forEach(x=>{if(x&&FACTIONS[x.faction])by[x.faction]=x;});
+  if(FORDER.some(id=>!by[id]))return null;
+  const cl=(v,a,b)=>Math.max(a,Math.min(b,Math.round(Number(v)||0)));
+  return{readings:FORDER.map(id=>{const x=by[id];return{faction:id,received:id==='crown'?true:!!S.copies[id],heading:String(x.heading||FACTIONS[id].name).slice(0,80),voice:String(x.voice||'').slice(0,700),conclusion:String(x.conclusion||'').slice(0,300),action:String(x.action||'').slice(0,300),standing_change:cl(x.standing_change,-2,2),coin:id==='ostmarch'?(S.copies.ostmarch?60:0):cl(x.coin,-60,120)};}),
+    events:(Array.isArray(r.events)?r.events:[]).slice(0,4).map(e=>String(e).slice(0,240)),
+    rumor:String(r.rumor||'').slice(0,300),
+    next:r.next&&r.next.title?{faction:FACTIONS[r.next.faction]?r.next.faction:'crown',title:String(r.next.title).slice(0,80),pitch:String(r.next.pitch||'').slice(0,400)}:null};
+}
+function fallback(A){
+  const has=(id)=>A.markedIds.has(id), stamp=t=>A.stamps.some(s=>s.icon===t);
+  const borderWood=A.borders.some(b=>b.passesNear.includes('the North Wood'));
+  const R=[];
+  const fee=Math.min(80,20+A.soundingsInked.length*4+(has('run')?15:0)+(has('ford')?12:0)+(has('shoals')?6:0)+Math.round(A.coastCoverage/10));
+  R.push({faction:'crown',received:true,heading:has('run')?'A road of water to the east':'A tidy map, little more',
+    voice:has('run')?'"A river deep enough for barges, running straight to Ostmarch. You understand what you have handed us, grapher."':'"Pretty lines. The Chancellor had hoped for more depths, and fewer blanks."',
+    conclusion:has('run')?'Kalvas is a gate to the east, and gates must be held.':'Kalvas is a quiet lake of no great consequence.',
+    action:has('run')?'A company of the Crown\'s marines will be stationed at Rautsalo.':'The map is filed in the Chancery and forgotten.',standing_change:fee>45?1:fee<30?-1:0,coin:fee});
+  const g=S.deals.bribe==='take';
+  R.push({faction:'guild',received:!!S.copies.guild,heading:g?(borderWood?'The line holds':'Paid for a line, got none'):(stamp('timber')||stamp('quarry')?'Timber and stone, noted':'Nothing worth cutting'),
+    voice:g?(borderWood?'"Clean work. The charter clerks will copy your line exactly."':'"Forty silver, Carr. And not one stroke of red around the wood. We remember."'):(stamp('timber')||stamp('quarry')?'"You marked the good timber and the grey stone. Useful."':'"A lake. Splendid. You cannot sell a lake."'),
+    conclusion:borderWood?'The North Wood is Guild charter land.':'There may be timber on the north shore.',action:borderWood?'Woodcutters will go north before the snow.':'They will ask around Rautsalo.',standing_change:g?(borderWood?2:-2):(stamp('timber')||stamp('quarry')?1:0),coin:0});
+  R.push({faction:'commons',received:!!S.copies.commons,heading:has('spire')?'The drowned village, remembered':'The spire forgotten again',
+    voice:has('spire')?'"There it is. Old Kalvas, on a map at last. My grandmother would have wept."':'"Did you not see the spire? Or did nobody pay you to?"',
+    conclusion:has('rautsalo')?'Rautsalo is now on the Crown\'s maps, and that rarely ends well.':'The lake folk remain unseen.',
+    action:has('spire')?'The House will petition for the old dam rights to be heard.':'The Speaker will raise the matter of the spire herself.',standing_change:has('spire')?2:-1,coin:0});
+  const isle=has('hallow')||A.stamps.some(s=>s.icon==='sacred');
+  R.push({faction:'druids',received:!!S.copies.druids,heading:isle?(S.deals.promise==='promise'?'A promise broken in ink':'The isle is known now'):'The lake keeps its secret',
+    voice:isle?'"You drew the stones. Now every fool with a boat will row out to look."':'"The island is not there. Good. Some silences are the truest lines on a map."',
+    conclusion:isle?'Hallow Isle will be visited by strangers.':'Hallow Isle remains hidden.',action:isle?'The Circle will remember your name in the wrong way.':'The Circle sends you a sprig of rowan.',standing_change:isle?(S.deals.promise==='promise'?-2:-1):(S.deals.promise==='promise'?2:1),coin:0});
+  R.push({faction:'ostmarch',received:!!S.copies.ostmarch,heading:S.copies.ostmarch?'A copy travels east':'Ostmarch hears whispers',
+    voice:S.copies.ostmarch?'"Sixty, as agreed. Our king reads rivers the way yours reads ledgers."':'"A map of Kalvas exists, and we were not offered it. Noted."',
+    conclusion:S.copies.ostmarch&&has('run')?'Kalvas Run is a road into Aster.':'Something is being drawn on the frontier.',action:S.copies.ostmarch?'Ostmarch barges will sound the Run from downstream.':'The envoy will ask questions in Corvalle.',standing_change:S.copies.ostmarch?1:0,coin:S.copies.ostmarch?60:0});
+  return{readings:R,events:[has('run')?'Marines arrived at Rautsalo; the fishermen grumble at the billets.':'The map of Kalvas went into the Chancery drawers.',borderWood?'Guild axes were heard in the North Wood.':'The North Wood stood quiet another season.'],
+    rumor:'They say the grapher Carr draws only what he is paid to see.',next:{faction:'crown',title:'The Greywater Pass',pitch:'The Crown wants the border over the Greywater mountains drawn before Ostmarch draws it first. It is a rough road; you will not go alone.'}};
+}
+function copyFor(code){
+  if(code==='not_granted')return'You did not allow Claude to play the council, so the rulebook decided this time.';
+  if(code==='rate_limited')return'Claude is busy for you right now, so the rulebook decided this time. Try again later.';
+  if(code==='session_expired')return'Your sign-in expired, so the rulebook decided this time.';
+  return'The council\'s reader was unavailable, so the rulebook decided this time.';
+}
+function toBlob(c,q=0.85){return new Promise(r=>c.toBlob(b=>r(b),'image/jpeg',q));}
+
+$('#deliver').onclick=async()=>{
+  if(S.delivered)return; S.delivered=true;
+  Sound.crack();
+  const A=analyze();
+  const mapCanvas=exportCanvas(MW,MH,x=>renderMapTo(x,{pencil:false}),1);
+  const sketchCanvas=S.sketch.marks.length?exportCanvas(960,640,renderSketchTo,1):null;
+  // results screen in waiting state
+  show('results');$('#aftermath').hidden=true;$('#res-title').textContent='The seals are broken one by one';
+  const vbox=$('#verdicts');vbox.textContent='';const cards={};
+  FORDER.forEach(id=>{const F=FACTIONS[id];const card=h('div',{class:'verdict waiting sealed'},h('div',{class:'head'},h('div',{class:'wax',style:`--c:${F.color}`},F.glyph),h('div',null,h('div',{class:'nm hand',style:'font-family:var(--f-display);font-size:17px'},F.name),h('div',{class:'hint'},S.copies[id]?'Has your map':'Heard about it'))),h('div',{class:'body'}));cards[id]=card;vbox.append(card);});
+  let di=0;const delib=$('#deliberation');delib.textContent=DELIB[0];const dt=setInterval(()=>{di=(di+1)%DELIB.length;delib.textContent=DELIB[di];},3200);
+  let res=null,source='claude',note='';
+  try{
+    const sample=window.claude?.use?await window.claude.use('sample'):null;
+    if(sample){
+      const lim=await sample.limits().catch(()=>null);const blobs=[];
+      if(lim&&lim.images){blobs.push(await toBlob(mapCanvas));if(sketchCanvas&&lim.images.maxCount>1)blobs.push(await toBlob(sketchCanvas));}
+      const opts={cache:false};if(blobs.length)opts.images=blobs;
+      res=validate(await sample.json(buildPrompt(A,blobs.length),opts));
+      if(!res)note='The council\'s answer came back garbled, so the rulebook decided this time.';
+    } else note='Claude is not available in this view, so the rulebook decided this time.';
+  }catch(e){note=copyFor(e&&e.code);}
+  clearInterval(dt);
+  if(!res){res=fallback(A);source='rules';}
+  lastResult=res;
+  delib.textContent='';
+  // apply
+  res.readings.forEach(r=>{WORLD.standing[r.faction]=Math.max(-10,Math.min(10,(WORLD.standing[r.faction]||0)+r.standing_change));WORLD.coin+=r.coin;});
+  WORLD.surveys=(WORLD.surveys||0)+1;
+  res.events.forEach(e=>WORLD.chronicle.push(`Survey ${WORLD.surveys}: ${e}`));
+  WORLD.next=res.next;
+  // reveal one seal at a time
+  for(const r of res.readings){
+    await new Promise(ok=>setTimeout(ok,900));
+    const card=cards[r.faction];Sound.crack();card.classList.remove('waiting','sealed');card.classList.add('cracked','fade-in');
+    const chips=h('div',{class:'chips'});
+    if(r.standing_change)chips.append(h('span',{class:'chip '+(r.standing_change>0?'up':'down')},`${r.standing_change>0?'+':''}${r.standing_change} standing`));
+    if(r.coin)chips.append(h('span',{class:'chip coin'},`${r.coin>0?'+':''}${r.coin} silver`));
+    const body=card.querySelector('.body');body.textContent='';
+    body.append(h('div',{class:'line'},r.heading),h('div',{class:'voice'},r.voice),h('div',{class:'what'},h('b',null,'They believe: '),r.conclusion),h('div',{class:'what'},h('b',null,'They will: '),r.action),chips);
+  }
+  await new Promise(ok=>setTimeout(ok,700));
+  $('#res-title').textContent='What the council made of your map';
+  const ev=$('#events');ev.textContent='';res.events.forEach(e=>ev.append(h('li',null,e)));
+  $('#rumor').textContent=res.rumor?`In the Heron, they're saying: “${res.rumor}”`:'';
+  const nx=$('#next');nx.textContent='';
+  if(res.next){nx.append(h('p',{class:'eyebrow'},`A letter under ${FACTIONS[res.next.faction].name}'s seal`),h('h3',null,res.next.title),h('p',{style:'margin-top:6px'},res.next.pitch),h('p',{class:'hint',style:'margin-top:8px'},'This commission is not in the game yet. It is waiting in your atlas.'));}
+  else nx.hidden=true;
+  $('#source-note').textContent=source==='rules'?note:'Played by Claude: every reading is new, even for the same map.';
+  $('#aftermath').hidden=false;$('#aftermath').classList.add('fade-in');renderStatus();
+  // save
+  const small=(c,w,q)=>{const s=document.createElement('canvas');s.width=w;s.height=Math.round(c.height*w/c.width);s.getContext('2d').drawImage(c,0,0,s.width,s.height);return s.toDataURL('image/jpeg',q);};
+  let img=small(mapCanvas,720,0.72);if(img.length>200000)img=small(mapCanvas,560,0.65);
+  const created=Date.now();
+  await Store.saveWorld(WORLD);
+  await Store.addPage({created,kind:'map',title:S.map.title||'Untitled',caption:`Survey ${WORLD.surveys}: ${S.map.title||'Untitled'}`,img});
+  if(sketchCanvas){const subj=FEAT[S.sketch.subject];await Store.addPage({created:created+1,kind:'sketch',title:subj?subj.name:'Open water',caption:`Sketch: ${subj?subj.name:'open water'}`,img:small(sketchCanvas,560,0.7)});}
+};
+$('#again').onclick=()=>{S=freshRun();renderBrief();show('brief');};
+$('#to-atlas').onclick=()=>openAtlas();
+$('#open-atlas').onclick=()=>{Sound.ensure();openAtlas();};
+$('#atlas-back').onclick=()=>{renderTitle();show('title');};
+
+/* ================= ATLAS ================= */
+async function openAtlas(){
+  show('atlas');
+  const st=$('#standing');st.textContent='';
+  FORDER.forEach(id=>{const v=WORLD.standing[id]||0;const pct=Math.abs(v)*5;
+    st.append(h('span',null,FACTIONS[id].name),h('div',{class:'meter','aria-label':`${FACTIONS[id].name}: ${v}`},h('i',{style:`${v>=0?'left:50%':'right:50%'};width:${pct}%;background:${v>=0?'var(--moss)':'var(--seal)'}`})));});
+  $('#purse').textContent=`Purse: ${WORLD.coin} silver. Surveys delivered: ${WORLD.surveys||0}.`;
+  const ch=$('#chron');ch.textContent='';
+  if(!WORLD.chronicle.length)ch.append(h('li',null,'Nothing has happened yet. The world is waiting for your first map.'));
+  WORLD.chronicle.slice().reverse().forEach(c=>ch.append(h('li',null,c)));
+  const box=$('#maps');box.textContent='';box.append(h('p',{class:'empty'},'Opening the portfolio…'));
+  const pages=await Store.listPages();box.textContent='';
+  if(!pages.length){box.append(h('p',{class:'empty'},'No maps yet. Your first fair copy will be kept here, with every sketch.'));return;}
+  pages.forEach(p=>box.append(h('figure',{onclick:()=>{const lb=$('#lightbox');lb.textContent='';lb.append(h('img',{src:p.img,alt:p.caption}));lb.hidden=false;}},h('img',{src:p.img,alt:p.caption,loading:'lazy'}),h('figcaption',null,`${p.caption} · ${new Date(p.created).toLocaleDateString()}`))));
+}
+$('#lightbox').onclick=()=>{$('#lightbox').hidden=true;};
+
+/* ================= BOOT ================= */
+function renderTitle(){
+  drawTitleCanvas();
+  const wl=$('#waiting-letter');
+  if(WORLD.next){wl.hidden=false;wl.textContent=`A letter waits under ${FACTIONS[WORLD.next.faction]?.name||'a'} seal: “${WORLD.next.title}.” That commission is still being written. For now, Kalvas calls again.`;}
+  else wl.hidden=true;
+  $('#start').textContent=WORLD.surveys?'Survey Lake Kalvas again':'Take the commission';
+  renderStatus();
+}
+$('#start').onclick=()=>{Sound.ensure();S=freshRun();renderBrief();show('brief');};
+
+async function boot(){
+  renderTitle();show('title');
+  if(document.fonts&&document.fonts.load){Promise.all(['28px "IM Fell English SC"','italic 16px "IM Fell English"','16px "IM Fell English"'].map(f=>document.fonts.load(f).catch(()=>{}))).then(()=>{drawTitleCanvas();if(S.screen==='draw'){renderMap();}});}
+  Store.init();
+  const w=await Store.loadWorld();
+  if(w&&w.standing){WORLD=Object.assign(WORLD,w);WORLD.standing=Object.assign({crown:0,guild:0,commons:0,druids:0,ostmarch:0},w.standing);if(S.screen==='title')renderTitle();}
+}
+boot();
+})();
+</script>

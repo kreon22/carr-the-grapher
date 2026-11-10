@@ -3,6 +3,8 @@
 Short log of choices, so we don't re-argue them. Newest at the top.
 Format: **date — decision.** Why. (Who: design / code)
 
+**2026-11-10 — Browser MVP lives in `web/index.html`, one self-contained file, published as a claude.ai artifact.** Uses the artifact `sample` capability (map image + mark summary sent to Claude for faction readings), `db` for the atlas and world state per player, and a rule-based fallback when Claude isn't available. First commission: Lake Kalvas survey. (design)
+
 **2026-11-10 — Pivot: the MVP becomes a browser game (published as an artifact); the Godot prototype is paused, not deleted.** The game's heart is now a loop (commission → expedition → drawing → report), with freehand drawing, layered audio and AI-interpreted maps, all quick to prototype in a browser. Godot code stays in the repo for reference. (design)
 
 **2026-11-10 — Factions interpret maps via Claude.** The submitted drawing (image) plus icons and notes are sent to Claude, which answers per faction with game effects and flavor. This is the "pull the lever" hook. (design)

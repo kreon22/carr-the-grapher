@@ -24,6 +24,16 @@ Submitting a map should feel like pulling a lever: you hand it over, and you're 
 - **Implementation idea:** the stakeholders are played by an AI. Your drawing (as an image) plus your icons and notes go to Claude, which answers in character as each faction. The result is structured game effects plus flavor text.
 - Outcomes accumulate into the bigger picture: a world state that remembers what every faction believes, based on *your* maps.
 
+## Factions
+Home (the realm Carr works from):
+- **The King**: borders, troops, military intel. Commissions surveys and pays the fee.
+- **The Industry Guild Coalition** (farmers, woodcutters, quarry workers…): resources, land charters, transport routes. Bribes for favorable lines.
+- **The Common People's House of Representatives**: villages, livelihoods, safety, memory of old wrongs. Fears maps bring tax-men and soldiers.
+- **The Druids**: sacred and wild places. Some places are better left off the map.
+
+Abroad:
+- **The neighboring kingdom far away**: the same four estates of its own (a king, a guild, a commons, druids). In the MVP it appears as one envoy who buys copies in secret.
+
 ## Mood & presentation
 - Hand-drawn ink on antique vellum: moody and meditative.
 - **Sound by scene:** wilderness has only nature sounds (wind, water, birds); drawing has paper rustle and pen scratch; the city has music.
