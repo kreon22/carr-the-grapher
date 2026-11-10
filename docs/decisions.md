@@ -3,6 +3,12 @@
 Short log of choices, so we don't re-argue them. Newest at the top.
 Format: **date — decision.** Why. (Who: design / code)
 
+**2026-11-10 — Pivot: the MVP becomes a browser game (published as an artifact); the Godot prototype is paused, not deleted.** The game's heart is now a loop (commission → expedition → drawing → report), with freehand drawing, layered audio and AI-interpreted maps, all quick to prototype in a browser. Godot code stays in the repo for reference. (design)
+
+**2026-11-10 — Factions interpret maps via Claude.** The submitted drawing (image) plus icons and notes are sent to Claude, which answers per faction with game effects and flavor. This is the "pull the lever" hook. (design)
+
+**2026-11-10 — Time pressure is on the expedition, never on drawing.** Drawing should stay meditative. (design)
+
 **2026-11-01 — Fog is its own node (`scripts/fog.gd`) drawn between the grid and Carr; it owns the revealed set and only listens to `Carr.moved`.** One job per script; the grid stays a pure map, and later systems can ask `fog.is_revealed()`. Revealed hexes are permanent. `reveal_radius` is exported (default 0) so both feels can be tried in play. (code)
 
 **2026-11-01 — Movement keys: W/E (up-left/up-right), A/D (left/right), Z/X (down-left/down-right), bound by physical key position.** Around S these six keys already form a pointy-top hex on a QWERTY keyboard; physical keycodes keep the same shape on QWERTZ/AZERTY. Remappable in Project Settings > Input Map (`move_nw` … `move_se`). (code)
