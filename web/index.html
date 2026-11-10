@@ -89,6 +89,15 @@ canvas{display:block;max-width:100%}
 .need.opt{color:var(--ink-soft);border:1px dashed rgba(42,28,19,.35)}
 .encounter.missing{background:linear-gradient(90deg,rgba(138,42,34,.07),transparent 70%)}
 
+/* splash */
+.splash{max-width:980px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding-block:clamp(28px,6vw,64px)}
+.leaf .splash-title{font-size:clamp(48px,10vw,108px);line-height:.95;letter-spacing:.02em}
+.splash-title i{font-family:var(--f-hand);font-size:.45em;color:var(--ink-soft);vertical-align:.35em;margin:0 .1em}
+.splash-sub{font-size:18px}
+.splash-canvas{width:100%;margin-top:8px}
+.splash-canvas canvas{width:100%;height:auto;touch-action:none;cursor:crosshair}
+.splash-foot{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap}
+
 /* intro */
 .intro{min-height:min(560px,72vh);display:flex;flex-direction:column;gap:18px;max-width:820px;margin:0 auto}
 .intro-text{flex:1;display:flex;flex-direction:column;gap:16px;justify-content:center;padding-block:10px}
@@ -220,8 +229,23 @@ textarea{font:inherit;font-family:var(--f-hand);font-style:italic;font-size:17px
     <button class="deskbtn" id="mute" type="button">Sound on</button>
   </header>
 
+  <!-- SPLASH -->
+  <section id="s-splash" class="screen">
+    <div class="leaf splash">
+      <h1 class="splash-title">Carr <i>the</i> Grapher</h1>
+      <p class="eyebrow splash-sub">Every map is a choice about what the world will know.</p>
+      <div class="splash-canvas">
+        <canvas id="splash-c" width="1920" height="600" aria-label="Trace the dotted coastline with the pen to begin"></canvas>
+      </div>
+      <div class="splash-foot">
+        <span class="hand muted" id="splash-hint">Trace the coast with your pen to begin.</span>
+        <button class="btn ghost" id="splash-start" type="button">Start</button>
+      </div>
+    </div>
+  </section>
+
   <!-- TITLE -->
-  <section id="s-title" class="screen">
+  <section id="s-title" class="screen" hidden>
     <div class="leaf title-grid">
       <div class="stack">
         <p class="eyebrow">A cartographer's commissions</p>
@@ -670,22 +694,31 @@ const Sound=(()=>{
     oar(){ if(!ctx)return; burst(brown,{type:'bandpass',f:700,q:0.7,a:0.25,d:0.6,v:0.5}); burst(white,{type:'bandpass',f:1600,q:1.2,a:0.05,d:0.35,v:0.06,at:0.5}); },
     plop(){ if(!ctx)return; tone(420,{to:85,a:0.004,d:0.2,v:0.35}); tone(900,{to:1500,a:0.004,d:0.08,v:0.06,at:0.12}); },
     scrape(){ if(!ctx)return; burst(brown,{type:'lowpass',f:260,a:0.05,d:0.9,v:0.8}); tone(58,{type:'sawtooth',a:0.05,d:0.7,v:0.06}); },
+    tick(){ if(!ctx)return; burst(white,{type:'bandpass',f:2700,q:1.4,a:0.002,d:0.05,v:0.14}); tone(820,{to:560,a:0.002,d:0.06,v:0.05}); },
     crack(){ if(!ctx)return; for(let i=0;i<6;i++) burst(white,{type:'highpass',f:2200+Math.random()*2000,a:0.001,d:0.03,v:0.25,at:Math.random()*0.12}); tone(220,{to:120,a:0.002,d:0.1,v:0.12}); },
   };
 })();
 
+let lastSoundAt=0;
+['rustle','stamp','oar','plop','scrape','crack'].forEach(k=>{const f=Sound[k];Sound[k]=(...a)=>{lastSoundAt=performance.now();return f(...a);};});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button,input[type=checkbox]');if(!b||b.disabled)return;
+  Sound.ensure();setTimeout(()=>{if(performance.now()-lastSoundAt>90)Sound.tick();},0);
+});
+
 /* ================= SCREENS ================= */
-const SCREENS=['title','intro','brief','exp','draw','report','results','atlas'];
+const SCREENS=['splash','title','intro','brief','exp','draw','report','results','atlas'];
 function show(name){
   SCREENS.forEach(s=>{$('#s-'+s).hidden=(s!==name);});
   S.screen=name;
   if(name!=='intro')stopIntro();
-  const sc={title:'title',intro:'title',brief:'city',exp:'wild',draw:'draw',report:'city',results:'city',atlas:'title'}[name];
+  const sc={splash:'draw',title:'title',intro:'title',brief:'city',exp:'wild',draw:'draw',report:'city',results:'city',atlas:'title'}[name];
   if(sc)Sound.setScene(sc);
   renderStatus(); window.scrollTo(0,0);
 }
 function renderStatus(){
   const st=$('#status'); st.textContent='';
+  if(S.screen==='splash')return;
   if(S.screen==='exp'){
     st.append(h('b',null,`Day ${S.day} of 3`),` · the ${ord(S.hour)} hour · bread `);
     const sup=h('span',{class:'supplies','aria-label':`${4-S.day} days of bread left`});
@@ -906,13 +939,13 @@ function startIntro(page){
   const step=reduce?0:2600;
   els.forEach((p,i)=>introTimers.push(setTimeout(()=>{p.classList.add('on');if(i===els.length-1)finishLines();},400+i*step)));
   function finishLines(){
-    introDone=true;const hold=reduce?9000:5000;const bar=$('#intro-bar');
+    introDone=true;if(page===INTRO.length-1)return;const hold=reduce?9000:5000;const bar=$('#intro-bar');
     bar.style.transition='none';bar.style.width='0';void bar.offsetWidth;bar.style.transition=`width ${hold}ms linear`;bar.style.width='100%';
     introTimers.push(setTimeout(introNext,hold));
   }
 }
 function introNext(){
-  if(!introDone){stopIntro();$$intro().forEach(p=>p.classList.add('on'));introDone=true;
+  if(!introDone){stopIntro();$$intro().forEach(p=>p.classList.add('on'));introDone=true;if(introPage===INTRO.length-1)return;
     const bar=$('#intro-bar');bar.style.transition='none';bar.style.width='0';void bar.offsetWidth;bar.style.transition='width 5000ms linear';bar.style.width='100%';
     introTimers.push(setTimeout(introNext,5000));return;}
   if(introPage<INTRO.length-1)startIntro(introPage+1);
@@ -1339,6 +1372,28 @@ async function openAtlas(){
 }
 $('#lightbox').onclick=()=>{$('#lightbox').hidden=true;};
 
+/* ================= SPLASH ================= */
+const SPLASH={marks:[],done:false};
+const GUIDE=(()=>{const pts=[];for(let i=0;i<=60;i++){const x=90+i*13.3;pts.push([x,150+46*Math.sin(x/115)+18*Math.sin(x/41+1)]);}return pts;})();
+function splashCoverage(){const pts=SPLASH.marks.flatMap(m=>m.pts);let n=0;for(const [a,b] of GUIDE){if(pts.some(([p,q])=>Math.abs(p-a)<22&&Math.abs(q-b)<22))n++;}return n/GUIDE.length;}
+function renderSplash(){
+  const x=$('#splash-c').getContext('2d');x.setTransform(2,0,0,2,0,0);
+  x.drawImage(VELLUM_MAP,0,180,960,300,0,0,960,300);
+  if(SPLASH.done){x.save();x.globalCompositeOperation='multiply';x.fillStyle='rgba(95,131,150,0.2)';x.beginPath();GUIDE.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.lineTo(GUIDE[GUIDE.length-1][0],300);x.lineTo(GUIDE[0][0],300);x.closePath();x.fill();x.restore();
+    drawCompass(x,880,70,34);
+    x.save();x.fillStyle=INK;x.font='italic 18px "IM Fell English", Georgia, serif';x.textAlign='center';x.fillText('the known world begins here',480,275);x.restore();}
+  else{
+    x.save();x.strokeStyle=PENCIL;x.lineWidth=1.4;x.setLineDash([3,6]);x.beginPath();GUIDE.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.stroke();x.setLineDash([]);
+    const [sx,sy]=GUIDE[0];x.beginPath();x.arc(sx,sy,7,0,Math.PI*2);x.stroke();
+    x.fillStyle='rgba(90,78,64,0.85)';x.font='italic 15px "IM Fell English", Georgia, serif';x.textAlign='left';x.fillText('begin here',sx-8,sy+28);
+    x.textAlign='right';x.fillText('…and end here',GUIDE[GUIDE.length-1][0]+8,GUIDE[GUIDE.length-1][1]-18);x.restore();}
+  SPLASH.marks.forEach(m=>drawStroke(x,m));
+  if(!SPLASH.done&&splashCoverage()>=0.8){SPLASH.done=true;$('#splash-hint').textContent='Well drawn.';setTimeout(()=>{Sound.crack();renderSplash();},350);setTimeout(goMenu,1800);}
+}
+function goMenu(){if(S.screen!=='splash')return;renderTitle();show('title');}
+attachPen($('#splash-c'),()=>960,()=>300,()=>'pen',()=>SPLASH.marks,renderSplash,()=>{Sound.ensure();return SPLASH.done;});
+$('#splash-start').onclick=goMenu;
+
 /* ================= BOOT ================= */
 function renderTitle(){
   drawTitleCanvas();
@@ -1351,8 +1406,8 @@ function renderTitle(){
 $('#start').onclick=()=>{Sound.ensure();S=freshRun();startIntro(0);};
 
 async function boot(){
-  renderTitle();show('title');
-  if(document.fonts&&document.fonts.load){Promise.all(['28px "IM Fell English SC"','italic 16px "IM Fell English"','16px "IM Fell English"'].map(f=>document.fonts.load(f).catch(()=>{}))).then(()=>{drawTitleCanvas();if(S.screen==='draw'){renderMap();}});}
+  renderSplash();show('splash');
+  if(document.fonts&&document.fonts.load){Promise.all(['28px "IM Fell English SC"','italic 16px "IM Fell English"','16px "IM Fell English"'].map(f=>document.fonts.load(f).catch(()=>{}))).then(()=>{drawTitleCanvas();if(S.screen==='splash')renderSplash();if(S.screen==='draw'){renderMap();}});}
   Store.init();
   const w=await Store.loadWorld();
   if(w&&w.standing){WORLD=Object.assign(WORLD,w);WORLD.standing=Object.assign({crown:0,guild:0,commons:0,druids:0,ostmarch:0},w.standing);if(S.screen==='title')renderTitle();}
